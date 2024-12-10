@@ -26,19 +26,22 @@ void Analysis(string filename) {
         "LP2_20[1]*1e9", \
         "LP2_20[2]*1e9", \
         "LP2_20[7]*1e9", \
+        "(toa_code*3.125/cal_code)-LP2_20[2]*1e9", \
     };
     
-    string condition = "tot_code!=480&&nhits!=0&&LP2_20[0]!=0.0&&LP2_20[1]!=0.0";
+    string condition = "tot_code!=480&&LP2_20[0]!=0.0&&LP2_20[1]!=0.0&&LP2_20[2]<(-5.0*(1e-9))&&cal_code>180&&cal_code<200"; // tot_code!=480&&LP2_20[0]!=0.0&&LP2_20[1]!=0.0&&LP2_20[2]<(-5.0*(1e-9))&&toa_code>500&&toa_code<600&&cal_code>186&&cal_code<192";
+    // string condition = "nhits>0"; // tot_code!=480&&LP2_20[0]!=0.0&&LP2_20[1]!=0.0&&LP2_20[2]<(-5.0*(1e-9))&&toa_code>500&&toa_code<600&&cal_code>186&&cal_code<192";
     
     string labels[] = {
         "TOA [ns]", \
         "TOT [ns]", \
         "CAL", \
         "N_{hits}", \
-        "SiPm 1 (top) [ns]", \
         "SiPm 2 (bottom) [ns]", \
+        "SiPm 1 (top) [ns]", \
         "Photek [ns]", \
         "Clock [ns]", \
+        "#Delta T [ns]", \
     };
     
     string histnames[] = {
@@ -46,10 +49,11 @@ void Analysis(string filename) {
         "TOT", \
         "CAL", \
         "Nhits", \
-        "SiPm1_top", \
         "SiPm2_bottom", \
+        "SiPm1_top", \
         "Photek", \
         "Clock", \
+        "DeltaT", \
     };
     
     int n_vars = sizeof(print_variables) / sizeof(print_variables[0]);
@@ -74,7 +78,7 @@ void Analysis(string filename) {
     }
 
     string print_variables_2D[] = {
-        "toa_code*3.125/cal_code:(tot_code*2 - floor(tot_code/32))*3.125/cal_code", \
+        "(tot_code*2 - floor(tot_code/32))*3.125/cal_code:toa_code*3.125/cal_code", \
     };
 
     string histnames_2D[] = {

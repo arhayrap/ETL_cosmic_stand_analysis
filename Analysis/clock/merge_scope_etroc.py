@@ -70,8 +70,8 @@ def linear_fit_rising_edge(signal, time_axis, frequency, sampling_rate, which_pe
         height_min = clk_bound_min # d * prop_min / 100 # min(signal[s]) + d * prop_min / 100
         height_max = clk_bound_max # d - d * prop_max / 100 # max(signal[s]) - d * prop_max / 100
         
-        p_min, _ = find_peaks(-signal[s], height = (-1*height_min, -1*min(signal[s])), distance=int(len(signal[s])/8))
-        p_max, _ = find_peaks(-signal[s], height = (-1*max(signal[s]), -1*height_max), distance=int(len(signal[s])/8))
+        p_min, _ = find_peaks(-signal[s], height = (-1*height_min, -1*min(signal[s])), distance=int(len(signal[s])/12))
+        p_max, _ = find_peaks(-signal[s], height = (-1*max(signal[s]), -1*height_max), distance=int(len(signal[s])/12))
         print(p_min, p_max)
         N_peaks_before_max.append(len(p_max))
         N_peaks_before_min.append(len(p_min))
@@ -94,21 +94,18 @@ def linear_fit_rising_edge(signal, time_axis, frequency, sampling_rate, which_pe
         n_f_points = []
         print(min(len(p_max), len(p_min)))
         # print(f"The length of the max and the min: {len(p_max)}, {len(p_min)}.")
-        for p in range(0,min([len(p_max), len(p_min)])): # /////////////////////////////////////////////////////////////// LOOP OVER THE PEAKS
+        for p in range(min(len(p_max), len(p_min))): # /////////////////////////////////////////////////////////////// LOOP OVER THE PEAKS
             # height_min = d * prop_min / 100 # signal[s][p_min][p] + d[p] * prop_min / 100
             # height_max = d - d * prop_max / 100 # signal[s][p_max][p] - d[p] * prop_max / 100
             start = p_min[p]
             end   = p_max[p]
-            print("================================")
             print(start)
             print(end)
             print(len(time_axis))
             print(height_min, height_max)
-            print(amp_step)
             print()
             rising_edge_start = start
             for i in range(start, end - 1):
-                print("********************** ", signal[s][i], signal[s][i+1])
                 if signal[s][i] < signal[s][i+1] and abs(signal[s][i] - signal[s][i+1]) > amp_step and signal[s][i] >= height_min:
                     rising_edge_start = i
                     print("---------------------------->    ", rising_edge_start)
@@ -146,67 +143,6 @@ def linear_fit_rising_edge(signal, time_axis, frequency, sampling_rate, which_pe
 def linear(x, a, b):
     return a*x + b
 
-def find_cross_x(array, start, direction):
-    minima = np.min(array)
-    maxima = np.max(array)
-    min_scale = np.abs(maxima - minima)/10.0
-    max_scale = np.abs(maxima - minima)*9.0/10.0
-    crossing_point = start
-    i = start
-    while i < len(array):
-        if i != 0 and (array[i] - array[i - 1]) > min_scale and direction < 0 and (array[i] - min(array)) > min_scale and (array[i] - min(array)) < max_scale:
-            crossing_point = i
-            break
-        if i != 0 and (array[i - 1] - array[i]) > min_scale and direction < 0 and (array[i] - min(array)) > min_scale and (array[i] - min(array)) < max_scale:
-            crossing_point = i
-            break
-        else:
-            i+=direction
-    return crossing_point
-
-def add_clock_old(tree):
-    correction_offset = tree['timeoffsets'].array()
-    channel = tree['channel'].array()
-    time = tree['time'].array()
-    nSamples = len(time)
-    clocks = channel[:,7]
-    triggers = channel[:,7]
-    times = np.array(time[:,0])*10**9
-    clock = np.array(clocks)
-    minima = np.tile(np.min(clock, axis=1).reshape(-1,1), (1, len(clock[0])))
-    maxima = np.tile(np.max(clock, axis=1).reshape(-1,1), (1, len(clock[0])))
-    amp_fraction = 20 # %
-    amp = minima + np.abs(minima - maxima)*amp_fraction/100
-
-    min_scale = np.abs(maxima - minima)/10.0
-
-    clock_diff = np.diff(clock, append=0)
-    clock_diff_mask = clock_diff > min_scale
-    # true after indices
-    check_prior_fall = clock_diff < -min_scale
-    prior_indices = np.argmax(check_prior_fall, axis=1)
-
-    prior_fall_mask = np.arange(check_prior_fall.shape[1]) >= prior_indices[:, None]
-
-    global_mask = clock_diff_mask & prior_fall_mask
-
-    times = np.where(global_mask, times, 0)
-    clock = np.where(global_mask, clock, 0)
-    # delete 0 values for each row
-    times = ak.Array([sublist[sublist != 0] for sublist in times])
-    clock = ak.Array([sublist[sublist != 0] for sublist in clock])
-
-    # print(times)
-    time_slope = times[:,1] - times[:,0]
-    clock_slope = clock[:,1] - clock[:,0]
-    slope = clock_slope / time_slope
-    ybias = clock[:,0] - slope*times[:,0]
-
-    # calculate 20% of the amplitude
-    amp = (minima + np.abs(minima - maxima)*amp_fraction/100)[:,0]
-    clock_timestamp = np.array((amp - ybias) / slope) + correction_offset[:, 6]*10**9
-    return clock_timestamp
-
 def add_clock(tree, frequency = 40*10**6, plotting = False): # Hz
     correction_offset = tree['timeoffsets'].array() # [0:n_of_e]
     channel = tree['channel'].array() # [0:n_of_e]
@@ -219,8 +155,8 @@ def add_clock(tree, frequency = 40*10**6, plotting = False): # Hz
     times = np.array(time[:,0])*10**9
     clock = np.array(clocks)
     print(clock)
-    # slopes, biases, rising_edges_mV, rising_edges_t, n_points_rising_edge, n_peaks_before_truncation_max, n_peaks_before_truncation_min, n_peaks_after_truncation, peak_index_min, peak_index_max = linear_fit_rising_edge(clock, times, frequency, 1)
-    slopes, biases, rising_edges_mV, rising_edges_t, n_peaks_after_truncation, peak_index_min, peak_index_max, n_fit_points = linear_fit_rising_edge(clock, times, frequency, 1)
+    slopes, biases, rising_edges_mV, rising_edges_t, n_points_rising_edge, n_peaks_before_truncation_max, n_peaks_before_truncation_min, n_peaks_after_truncation, peak_index_min, peak_index_max = linear_fit_rising_edge(clock, times, frequency, 1)
+    # slopes, biases, rising_edges_mV, rising_edges_t, n_peaks_after_truncation, peak_index_min, peak_index_max, n_fit_points = linear_fit_rising_edge(clock, times, frequency, 1)
     amp_fraction = 20 # %
     clock_timestamps = []
     clock_timestamp_differences = []
@@ -306,69 +242,37 @@ def add_clock(tree, frequency = 40*10**6, plotting = False): # Hz
         
     return clock_timestamps,clock_timestamp_differences, n_peaks_after_truncation, n_fit_points
 
-def merge_trees(files, trees, output_file):
-    ts = [uproot.open(files[t])[tree] for t, tree in enumerate(trees)]
-    datas = [t.arrays() for t in ts]
-
-    merged_data  = {}
-    common_keys  = []
-    other_keys_1 = []
-    other_keys_2 = []
-
-    for data in datas:
-        for key in data.fields:
-            if key not in merged_data.keys():
-                # print(key, len(data[key]))
-                merged_data[key] = data[key]
-
-    clock, t_diff, n_peak_a, n_fit_points = add_clock(uproot.open(files[0])["pulse"], plotting = args.plotting)
-    datas = [t.arrays() for t_i, t in enumerate(ts)] # taking as many events from KCU as we have triggers
-    # datas.append(ak.Array({"Clock": clock, "t_diff": t_diff, "n_peaks": n_peak_a, "n_fit_points": n_fit_points}))
-    merged_data["Clock"] = clock
-    merged_data["t_diff"] = t_diff
-    merged_data["n_peaks"] = n_peak_a
-    merged_data["n_fit_points"] = n_fit_points
-
-    print(merged_data.keys(), len(merged_data.keys()))
-
-    with uproot.recreate(output_file) as output:
-        try:
-            output[trees[0]] = {key: merged_data[key] for key in merged_data.keys()}
-            print(output[trees[0]].num_entries)
-            print("Merging done!")
-        except:
-            for key in merged_data.keys():
-                print(key, len(merged_data[key]))
-            print("The number of the events doesn't match and cannot be merged.")
-
 if __name__ == "__main__":
 
     base = "/home/aram/cosmic_data_analysis"
     f_index = args.input_file_index
     print(f_index, "\n")
     prev_status = 0
+    height_min = clk_bound_min # d * prop_min / 100 # min(signal[s]) + d * prop_min / 100
+    height_max = clk_bound_max # d - d * prop_max / 100 # max(signal[s]) - d * prop_max / 100
 
-    reco_tree   = f"{base}/Scope_data_combined_reco/run_{f_index}.root"
-    etroc_tree  = f"{base}/ETROC_output/output_run_{f_index}_rb0.root"
-    conv_tree   = f"{base}/Scope_data_combined_conv/converted_run{f_index}.root"
-    merged_file = f"{base}/MergedData/run_{f_index}.root"
+    # reco_tree   = f"{base}/Scope_data_combined_reco/run_{f_index}.root"
+    # etroc_tree  = f"{base}/ETROC_output/output_run_{f_index}_rb0.root"
+    conv_tree   = f"{base}/Scope_data_combined_conv/converted_run9018100002460.root"
+    # merged_file = f"{base}/MergedData/run_{f_index}.root"
+    tree = uproot.open(conv_tree)["pulse"].arrays()
+    clock_signal = tree["channel"][:, 7]
+    time = tree["time"][:, 0]
+    print(len(clock_signal), len(clock_signal[0]))
+    print(len(time), len(time[0]))
+    print(clock_signal)
+    # reco = (path.isfile(reco_tree))
+    # etroc = (path.isfile(etroc_tree))
+    # status = (reco & etroc)
+    s = 0
+    p_min, _ = find_peaks(-clock_signal[s], height = (-1*height_min, -1*min(clock_signal[s])), distance=int(len(clock_signal[s])/12))
+    p_max, _ = find_peaks(-clock_signal[s], height = (-1*max(clock_signal[s]), -1*height_max), distance=int(len(clock_signal[s])/12))
+    print(p_min)
+    print(p_max)
+    plt.plot(time[0], clock_signal[0])
+    # plt.scatter(range(), p_min, color = "blue")
+    # plt.scatter(p_max, color = "red")
+    plt.show()
+    
+    
 
-    reco = (path.isfile(reco_tree))
-    etroc = (path.isfile(etroc_tree))
-    status = (reco & etroc)
-
-    print( "                                   File")
-    print(f"Acquisition from the KCU done:   {etroc}")
-    print(f"Conversion done:                 {reco}")
-    print(f"Merged file wasn't created:      {not path.isfile(merged_file)}")
-    print()
-
-    if status:
-        time.sleep(10)
-        merge_trees([conv_tree, reco_tree, etroc_tree], ["pulse", "pulse", "pulse"], merged_file)
-        time.sleep(1)
-    else:
-        if not reco:
-            print("The reconstructed scope file has not been made!")
-        if not etroc:
-            print("The ETROC file has not been made!")

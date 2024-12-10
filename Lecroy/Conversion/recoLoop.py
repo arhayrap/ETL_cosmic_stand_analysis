@@ -111,7 +111,12 @@ while True:
         print('Now moving the converted and raw data to backup')
     filebase = "/home/aram/cosmic_data_analysis/Lecroy/Conversion/RECONSTRUCTED/run_scope"
     files_to_combine = [f"{filebase}{i}.root" for i in range(prev_index+1, file_index+1)]
-    combine_command = f"hadd /home/aram/cosmic_data_analysis/Scope_data_combined/run_{file_index}.root {' '.join(files_to_combine)}"
+    combine_command = f"hadd /home/aram/cosmic_data_analysis/Scope_data_combined_reco/run_{file_index}.root {' '.join(files_to_combine)}"
+    print(combine_command)
+    os.system(combine_command)
+    filebase = "/home/aram/cosmic_data_analysis/Lecroy/Conversion/CONVERTED/converted_run"
+    files_to_combine = [f"{filebase}{i}.root" for i in range(prev_index+1, file_index+1)]
+    combine_command = f"hadd /home/aram/cosmic_data_analysis/Scope_data_combined_conv/converted_run{file_index}.root {' '.join(files_to_combine)}"
     print(combine_command)
     os.system(combine_command)
     break

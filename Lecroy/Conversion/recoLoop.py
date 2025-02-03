@@ -53,18 +53,22 @@ Threshold=15
 while True:
 
     file_index = int(args.input_file_index)
-    ETROC_path = "/home/aram/cosmic_data_analysis/ETROC_output/"
-    all_indices = np.array([int(x.split('output_run_')[1].split('_rb0.dat')[0]) for x in glob.glob('%s/output_run_90181*_rb0.dat'%ETROC_path)])
+    ETROC_path = "/home/aram/cosmic_data_analysis/ETROC_output_box_setup/"
+    # all_indices = np.array([int(x.split('output_run_')[1].split('_rb0.dat')[0]) for x in glob.glob('%s/output_run_90181*_rb0.dat'%ETROC_path)])
+    all_indices = np.array([int(x.split('output_run_')[1].split('_rb0.dat')[0]) for x in glob.glob('%s/output_run_8090184*_rb0.dat'%ETROC_path)])
     all_indices = np.sort(all_indices)
     print(all_indices)
     # diff = all_indices - file_index
-    prev_index = all_indices[(all_indices<file_index)][-1]
-    print(prev_index, file_index)
+    # prev_index = all_indices[(all_indices<file_index)][-1]
+    next_index = all_indices[(all_indices>file_index)][0]
+    # print(prev_index, file_index)
+    print(file_index, next_index)
 
     # ListRawFiles = [(x.split('C8--Cosmics_')[1].split('.trc')[0]) for x in glob.glob('%s/C8--Cosmics_*'%raw_path)]
     # SetRawFiles = set([int(x) for x in ListRawFiles])
 
-    SetRawFiles = range(prev_index+1, file_index+1)
+    # SetRawFiles = range(prev_index+1, file_index+1)
+    SetRawFiles = range(file_index, next_index)
     print(SetRawFiles)
 
     if len(SetRawFiles) != 0:
@@ -110,12 +114,14 @@ while True:
 
         print('Now moving the converted and raw data to backup')
     filebase = "/home/aram/cosmic_data_analysis/Lecroy/Conversion/RECONSTRUCTED/run_scope"
-    files_to_combine = [f"{filebase}{i}.root" for i in range(prev_index+1, file_index+1)]
+    # files_to_combine = [f"{filebase}{i}.root" for i in range(prev_index+1, file_index+1)]
+    files_to_combine = [f"{filebase}{i}.root" for i in range(file_index, next_index)]
     combine_command = f"hadd /home/aram/cosmic_data_analysis/Scope_data_combined_reco/run_{file_index}.root {' '.join(files_to_combine)}"
     print(combine_command)
     os.system(combine_command)
     filebase = "/home/aram/cosmic_data_analysis/Lecroy/Conversion/CONVERTED/converted_run"
-    files_to_combine = [f"{filebase}{i}.root" for i in range(prev_index+1, file_index+1)]
+    # files_to_combine = [f"{filebase}{i}.root" for i in range(prev_index+1, file_index+1)]
+    files_to_combine = [f"{filebase}{i}.root" for i in range(file_index, next_index)]
     combine_command = f"hadd /home/aram/cosmic_data_analysis/Scope_data_combined_conv/converted_run{file_index}.root {' '.join(files_to_combine)}"
     print(combine_command)
     os.system(combine_command)

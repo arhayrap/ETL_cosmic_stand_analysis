@@ -2,3 +2,4 @@
 *.trc
 *.yaml
 *.json
+ETROC_output_box_setup/*

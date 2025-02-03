@@ -44,7 +44,7 @@ def data_dumper(
     in_files = glob.glob(input_file.replace('rb0', 'rb*'))
     #print(in_files)
     out_files = [x.replace('.dat', '.json') for x in in_files]
-
+    # delta_bcid = []
     for irb, f_in in enumerate(in_files):
 
         #f_in = f'{here}/ETROC_output/output_run_{args.input}_rb{rb}.dat'
@@ -104,10 +104,10 @@ def data_dumper(
             if d['elink'] not in elink_report:
                 elink_report[d['elink']] = {'nheader':0, 'nhits':0, 'ntrailer':0}
             sus = False
-            if d['raw_full'] in all_raw[-50:] and not t in ['trailer', 'filler']:  # trailers often look the same
+            # if d['raw_full'] in all_raw[-50:] and not t in ['trailer', 'filler']:  # trailers often look the same
                 #print("Potential double counting", t, d)
                 #all_raw.append(d['raw_full'])
-                continue
+            #     continue
             if t not in ['trailer', 'filler']:
                 all_raw.append(d['raw_full'])
 
@@ -119,13 +119,27 @@ def data_dumper(
                 uuid_tmp = d['l1counter'] | d['bcid']<<8
                 headers.append(d['raw'])
                 header_counter += 1
-                #if (abs(d['bcid']-bcid_t)<50) and (d['bcid'] - bcid_t)>0 and not (d['bcid'] == bcid_t):
-                #    skip_event = True
-                #    print("Skipping event")
-                #    continue
+                # if (d['bcid'] - bcid_t)>0 and not (d['bcid'] == bcid_t): delta_bcid.append(d['bcid']-bcid_t)
+
+                # if (((abs(d['bcid']-bcid_t)<500) or (abs(d['bcid']+3564-bcid_t)<50)) and not (d['bcid'] == bcid_t) and not skip_trigger_check):
+                #     skip_event = True
+                #     print("Skipping event", d['l1counter'], d['bcid'], bcid_t)
+                #     skip_counter += 1
+                #     continue
+                # else:
+                #     skip_event = False
+
+                # if (abs(d['bcid']-bcid_t)<25) and (d['bcid'] - bcid_t)>0 and not (d['bcid'] == bcid_t):
+                #     # skip_event = True
+                #     print(f"Skipping event: {abs(d['bcid']-bcid_t)}")
+                #     # continue
+                # else:
+                #     skip_event = False
+
                 if d['bcid'] != bcid_t and last_missing:
                     missing_l1counter[-1].append(d['bcid'])
-                    #print("Jeongeun is Checking")
+                    # print("Jeongeun is Checking")
+                    # print("Aram is Checking")
                     last_missing = False
 
                 if d['l1counter'] == l1a:
@@ -170,7 +184,7 @@ def data_dumper(
                     #     skip_event = False
                     
                     uuid.append(d['l1counter'] | d['bcid']<<8)
-                    skip_event = False
+                    # skip_event = False
                     
                     bcid_t = d['bcid']
                     if (abs(l1a - d['l1counter'])>1) and abs(l1a - d['l1counter'])!=255 and verbose:
@@ -223,7 +237,7 @@ def data_dumper(
                     print("This event already has more than 256 hits. Skipping event.")
                     skip_event = True
                     continue
-                    #bad_run = True
+                    bad_run = True
                     #break
 
             if t == 'trailer' and t_tmp != 'trailer':
@@ -507,7 +521,6 @@ def data_dumper(
             fig.colorbar(cax,ax=ax)
             fig.savefig(f"ETROC_output/{args.input}_layers_heatmap.pdf")
             fig.savefig(f"ETROC_output/{args.input}_layers_heatmap.png")
-
     if not bad_run:
         return len(events), events
     else:

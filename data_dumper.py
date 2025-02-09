@@ -7,7 +7,9 @@ import awkward as ak
 import json
 import yaml
 from yaml import Dumper, Loader
-from tamalero.DataFrame import DataFrame
+from DataFrame import DataFrame
+from matplotlib.colors import Normalize
+
 try:
     from emoji import emojize
 except ModuleNotFoundError:
@@ -42,12 +44,8 @@ def data_dumper(
     missing_l1counter = []
 
     in_files = glob.glob(input_file.replace('rb0', 'rb*'))
-    #print(in_files)
     out_files = [x.replace('.dat', '.json') for x in in_files]
-    # delta_bcid = []
     for irb, f_in in enumerate(in_files):
-
-        #f_in = f'{here}/ETROC_output/output_run_{args.input}_rb{rb}.dat'
 
         with open(f_in, 'rb') as f:
             print("Reading from {}".format(f_in))
@@ -99,15 +97,9 @@ def data_dumper(
         for t, d in unpacked_data:
             if index % 10000 == 0:
                 print(f"{index}")
-            # if index == 200000:
-            #     break
             if d['elink'] not in elink_report:
                 elink_report[d['elink']] = {'nheader':0, 'nhits':0, 'ntrailer':0}
             sus = False
-            # if d['raw_full'] in all_raw[-50:] and not t in ['trailer', 'filler']:  # trailers often look the same
-                #print("Potential double counting", t, d)
-                #all_raw.append(d['raw_full'])
-            #     continue
             if t not in ['trailer', 'filler']:
                 all_raw.append(d['raw_full'])
 
@@ -119,27 +111,8 @@ def data_dumper(
                 uuid_tmp = d['l1counter'] | d['bcid']<<8
                 headers.append(d['raw'])
                 header_counter += 1
-                # if (d['bcid'] - bcid_t)>0 and not (d['bcid'] == bcid_t): delta_bcid.append(d['bcid']-bcid_t)
-
-                # if (((abs(d['bcid']-bcid_t)<500) or (abs(d['bcid']+3564-bcid_t)<50)) and not (d['bcid'] == bcid_t) and not skip_trigger_check):
-                #     skip_event = True
-                #     print("Skipping event", d['l1counter'], d['bcid'], bcid_t)
-                #     skip_counter += 1
-                #     continue
-                # else:
-                #     skip_event = False
-
-                # if (abs(d['bcid']-bcid_t)<25) and (d['bcid'] - bcid_t)>0 and not (d['bcid'] == bcid_t):
-                #     # skip_event = True
-                #     print(f"Skipping event: {abs(d['bcid']-bcid_t)}")
-                #     # continue
-                # else:
-                #     skip_event = False
-
                 if d['bcid'] != bcid_t and last_missing:
                     missing_l1counter[-1].append(d['bcid'])
-                    # print("Jeongeun is Checking")
-                    # print("Aram is Checking")
                     last_missing = False
 
                 if d['l1counter'] == l1a:
@@ -150,42 +123,8 @@ def data_dumper(
                         print("Skipping event (same l1a counter)", d['l1counter'], d['bcid'], bcid_t)
                         continue
                     pass
-                #elif d['l1counter'] < l1a and d['l1counter']!=0:
-                # # NOTE this part is experimental, and removes duplicate events
-                # # However, we should instead re-implement full consistency checks of header - data - trailer style
-                #    skip_event = True
-                #    print("Skipping event", d['l1counter'], d['bcid'], bcid_t)
-
                 else:
-                    # if abs(l1a - d['l1counter']) not in [1,255] and l1a>=0:
-                    #     #missing_l1counter.append([d['l1counter'], d['bcid'], i, d['l1counter'] - l1a])  # this checks if we miss any event according to the counter
-                    #     ## jeongeun printout just for check 
-                    #     #print("l1counter=", d['l1counter'], "bcid=", d['bcid'], "ev=", i, "delta=", d['l1counter'] - l1a, "bcidt=", bcid_t)
-                    #     inputs = [d['l1counter'], d['bcid'], i, d['l1counter'] - l1a]
-                    #     missing_l1counter.append(inputs[:4])
-                    #     last_missing = True
-                    # if uuid_tmp in uuid and abs(i - np.where(np.array(uuid) == uuid_tmp)[0][-1]) < 150:
-                    #     print("Skipping duplicate event")
-                    #     skip_counter += 1
-                    #     skip_event = True
-                    #     continue
-                    # else:
-                    #     uuid.append(d['l1counter'] | d['bcid']<<8)
-                    #hit_counter = 0
-                    #if (abs(d['bcid']-bcid_t)<40) and (d['bcid'] - bcid_t)>0 and not (d['bcid'] == bcid_t):
-                    #if (abs(d['bcid']-bcid_t)<500) and (d['bcid'] - bcid_t)>0 and not (d['bcid'] == bcid_t):
-
-                    # if (((abs(d['bcid']-bcid_t)<150) or (abs(d['bcid']+3564-bcid_t)<50)) and not (d['bcid'] == bcid_t) and not skip_trigger_check):
-                    #     skip_event = True
-                    #     print("Skipping event", d['l1counter'], d['bcid'], bcid_t)
-                    #     skip_counter += 1
-                    #     continue
-                    # else:
-                    #     skip_event = False
-                    
                     uuid.append(d['l1counter'] | d['bcid']<<8)
-                    # skip_event = False
-                    
                     bcid_t = d['bcid']
                     if (abs(l1a - d['l1counter'])>1) and abs(l1a - d['l1counter'])!=255 and verbose:
                         print("SUS")
@@ -247,18 +186,12 @@ def data_dumper(
                     try:
                         counter_t[-1] += 1
                         if hit_counter > 0:
-                            #print(hit_counter)
-                            #chipid[-1].append(hit_counter*d['chipid'])
                             chipid[-1] += hit_counter*[d['chipid']]
-                            #print(l1counter[-1], bcid[-1], chipid[-1])
-                        #else:
-                        #    chipid[-1].append()
                         nhits_trail[-1].append(d['hits'])
                         raw[-1].append(d['raw'])
                         crc[-1].append(d['crc'])
                     except IndexError:
                         print("Data stream started with a trailer, that is weird.")
-
             t_tmp = t
 
 
@@ -287,8 +220,6 @@ def data_dumper(
             total_events = len(events)
             # NOTE the check below is only valid for single ETROC
             #consistent_events = len(events[((events.nheaders==2)&(events.ntrailers==2)&(events.nhits==events.nhits_trail))])
-            #
-            #print(total_events, consistent_events)
 
             print(f"Done with {len(events)} events. " + emojize(":check_mark_button:"))
             #print(f" - skipped {skip_counter/events.nheaders[0]} events that were identified as double-triggered " + emojize(":check_mark_button:"))
@@ -301,31 +232,16 @@ def data_dumper(
             if len(missing_l1counter)>0:
                 print("   L1counter, BCID, event number and step size of these events are:")
 
-                ### (Jeongeun updated in Oct 30) 
-                ### check the entry in missing_l1counter.
-                ### add a if/else condition to work whether the missing_l1counter entries have 4 or 5 elements.
-                #print(missing_l1counter)
                 for entry in missing_l1counter:
                     if len(entry) ==4:
-                        #print("Entry == 4")
                         ml1,mbcid,mev,mdelta = entry
                         mbcidt = 0
                     else:
-                        #print("Entry > 4")
                         ml1,mbcid,mev,mdelta,mbcidt = entry
-               
                         if mbcidt - mbcid < 7:
                             print("Expected issue because of missing L1A dead time:", ml1, mbcid, mev,mdelta,mbcidt)
                         else:
                             print(ml1, mbcid, mev,mdelta,mbcidt)
-
-                ### original git code
-                #for ml1,mbcid,mev,mdelta,mbcidt in missing_l1counter:
-                #    if mbcidt - mbcid<7:
-                #        print("Expected issue because of missing L1A dead time:", ml1, mbcid, mev,mdelta,mbcidt)
-                #    else:
-                #        print(ml1, mbcid, mev,mdelta,mbcidt)
-
 
             print(f" - Total expected events is {total_events+len(missing_l1counter)}")
             print(f" - elink report:")
@@ -334,12 +250,8 @@ def data_dumper(
             with open(out_files[irb], "w") as f:
                 json.dump(ak.to_json(events), f)
 
-            #with open(f"ETROC_output/{args.input}_rb{rb}.json", "w") as f:
-            #    json.dump(ak.to_json(events), f)
-
             events_all_rb.append(events)
 
-            # make some plots
             import matplotlib.pyplot as plt
             import mplhep as hep
             plt.style.use(hep.style.CMS)
@@ -347,32 +259,19 @@ def data_dumper(
             hits = np.zeros([16, 16])
 
 
-            #if rb=='2':
-            #    mask = [(11,5)]
             mask = []
-            #if rb=='0':
-            #    mask = [(2,4), (3,4), (4,6), (3,11), (6,12)]
-            #if rb=='1':
-            #    mask = [(4,0)]
             for ev in events:
                 for row, col in zip(ev.row, ev.col):
                     if (row, col) not in mask:
                         hits[row][col] += 1
 
             fig, ax = plt.subplots(1,1,figsize=(7,7))
-            cax = ax.matshow(hits)
+            cax = ax.imshow(hits)
             ax.set_ylabel(r'$Row$')
             ax.set_xlabel(r'$Column$')
             fig.colorbar(cax,ax=ax)
             plot_file = f_in.replace('.dat', '_heatmap.png')
             fig.savefig(plot_file)
-            #fig.savefig(f"ETROC_output/{args.input}_rb{rb}_heatmap.png")
-
-            # FIXME this only works for a single ETROC right now
-            #if args.dump_mask:
-            #    with open(f"{here}/ETROC_output/mask_run{args.input}.yaml", 'w') as f:
-            #        yaml.dump(hits.tolist(), f)
-            #        #yaml.dump(hits, f)
 
             total_hits = np.sum(hits)
             print("Total number of hits:", total_hits)
@@ -380,9 +279,6 @@ def data_dumper(
         else:
             print("Bad run detected. Not creating a json file.")
             all_runs_good = False
-            #if os.path.isfile(f"{here}/ETROC_output/output_run_{args.input}_rb{rb}.json"):
-            #    os.remove(f"{here}/ETROC_output/output_run_{args.input}_rb{rb}.json")
-
 
     if len(events_all_rb)>1 or True:
         event_number = []
@@ -392,8 +288,6 @@ def data_dumper(
         col = []
         chipid = []
 
-        #sel = ak.flatten(events_all_rb[0].nhits>0)
-        #sel = ak.flatten(ak.ones_like(events_all_rb[0].nhits))
         sel = ak.flatten(ak.ones_like(events_all_rb[0].nhits, dtype=bool))
         events_with_hits = len(events_all_rb[0][sel])
 
@@ -420,13 +314,8 @@ def data_dumper(
                 from tqdm import tqdm
                 with tqdm(total=events_with_hits, bar_format='{l_bar}{bar:20}{r_bar}{bar:-20b}') as pbar:
                     for i, ev in enumerate(event_number):
-                        # print(i, ev)
                         for j, tmp_evt in enumerate(events_all_rb[rb][ak.flatten(events_all_rb[rb].bcid + 1 == events_all_rb[0].bcid[ev])]):
-                            # print(j,tmp_evt)
-                        #for j in events_all_rb[rb].event:
                             if abs(tmp_evt.event - ev)<100:
-                            #if events_all_rb[rb].l1counter[j] == events_all_rb[0].l1counter[i] and events_all_rb[rb].bcid[j] == events_all_rb[0].bcid[i] and abs(j-i) < 100:
-                            #if events_all_rb[rb].bcid[j] == events_all_rb[0].bcid[ev] and abs(j-ev) < 100:
                                 nhits[i] += ak.to_list(tmp_evt.nhits)
                                 row[i] += ak.to_list(tmp_evt.row)
                                 col[i] += ak.to_list(tmp_evt.col)
@@ -435,20 +324,10 @@ def data_dumper(
                                 cal[i] += ak.to_list(tmp_evt.cal_code)
                                 elink[i] += ak.to_list(tmp_evt.elink)
                                 chipid[i] += ak.to_list(tmp_evt.chipid)
-                                #print("--------------------------")
-                                #print(f"Found matching event for event {i} in rb {rb} stream")
                                 break
 
                         pbar.update()
 
-                #for j in events.event:
-                #    if events.l1counter[j] == events_all_rb[0].l1counter[j] and events.bcid[j] == events_all_rb[0].bcid[j]:
-                #        nhits[j].append(events.nhits)
-                #        row[j].append(events.row)
-                #        col[j].append(events.col)
-                #        chipid[j].append(events.chipid)
-                #
-                #
         print("Zipping again")
         events = ak.Array({
             'event': event_number,
@@ -483,12 +362,6 @@ def data_dumper(
             all_layer_hit_candidates = events[ak.all(events.nhits==1, axis=1)]
             all_layer_hit_candidates_no_noise_selection = (ak.num(all_layer_hit_candidates.col[((all_layer_hit_candidates.row[all_layer_hit_candidates.chipid==(38<<2)] < 5))]) >0)
 
-            #((all_layer_hit_candidates.row[all_layer_hit_candidates.chipid==(38<<2)] == 0) & ((all_layer_hit_candidates.row[all_layer_hit_candidates.chipid==(38<<2)] == 10)))
-            # events[ak.all(events.nhits, axis=1)].toa_code
-            #
-            #
-
-
             hits0 = np.zeros([16, 16])
             hits1 = np.zeros([16, 16])
             hits2 = np.zeros([16, 16])
@@ -499,8 +372,6 @@ def data_dumper(
                     hits1[row,col]+=1
                 for row, col in zip(ev.row[ev.chipid==(37 << 2)], ev.col[ev.chipid==(37 << 2)]):
                     hits2[row,col]+=1
-
-
 
             # make some plots
             import matplotlib.pyplot as plt

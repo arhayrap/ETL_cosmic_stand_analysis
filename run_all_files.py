@@ -5,9 +5,11 @@ import glob
 import os
 
 if __name__ == "__main__":
-    base = os.getcwd() + "/ETROC_output_box_setup/"
+    # base = "./ETROC_output_box_setup_1/"
+    base = "./ETROC_output_box_setup/"
     # filenames = glob.glob(base + "output_run_90181*_rb0.dat")
-    filenames = glob.glob(base + "output_run_8090184*.dat")
+    filenames = glob.glob(base + "output_run_8090184000*.dat")
+    # filenames = glob.glob(base + "output_run_80901811400000*_rb0.dat")
     iter = 0
     for f in filenames:
         file_index = f.split(base)[1].split("output_run_")[1].split("_rb0.dat")[0]

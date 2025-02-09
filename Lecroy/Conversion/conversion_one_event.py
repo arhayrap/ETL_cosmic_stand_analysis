@@ -16,8 +16,9 @@ initial = time.time()
 
 RawDataPath = ""
 RawDataLocalCopyPath = ""
-#OutputFilePath = "/home/daq/ScopeData/LecroyConverted/"
-OutputFilePath = "/home/daq/SurvivalBeam2021/LecroyScope/RecoData/ConversionRECO/"
+# OutputFilePath = "/home/daq/ScopeData/LecroyConverted/"
+# OutputFilePath = "/home/daq/SurvivalBeam2021/LecroyScope/RecoData/ConversionRECO/"
+OutputFilePath = "./CONVERTED/"
 eosPath = "root://cmseos.fnal.gov//store/group/cmstestbeam/SurvivalBeam2021/LecroyScope/RecoData/ConversionRECO/"
 
 LocalMode=True
@@ -299,7 +300,7 @@ for ic in range(nchan):
 		print("Copying files locally and moving originals to deletion folder.")
 		inputFiles.append("%s/C%i--Trace%i.trc" % (RawDataLocalCopyPath, ic+1,runNumber))
 		#print 'rsync -z -v %s %s && mv %s %s' % (this_file,RawDataLocalCopyPath,this_file,RawDataPath+"/to_delete/")
-		os.system('rsync -z -v %s %s && mv %s %s' % (this_file,RawDataLocalCopyPath,this_file,RawDataPath+"/to_delete/"))
+		# os.system('rsync -z -v %s %s && mv %s %s' % (this_file,RawDataLocalCopyPath,this_file,RawDataPath+"/to_delete/"))
 
 	else: inputFiles.append("C%i--Trace%i.trc" % (ic+1,runNumber)) ### condor copies files to current directory
 

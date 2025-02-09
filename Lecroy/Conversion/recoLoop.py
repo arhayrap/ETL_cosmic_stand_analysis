@@ -50,79 +50,68 @@ def RunEntriesScope(FileLocation, LGADChannels, LGADThreshold):
 LGADChannels=[0,1,2,7]
 Threshold=15
 
-while True:
+# while True:
 
-    file_index = int(args.input_file_index)
-    ETROC_path = "/home/aram/cosmic_data_analysis/ETROC_output_box_setup/"
-    # all_indices = np.array([int(x.split('output_run_')[1].split('_rb0.dat')[0]) for x in glob.glob('%s/output_run_90181*_rb0.dat'%ETROC_path)])
-    all_indices = np.array([int(x.split('output_run_')[1].split('_rb0.dat')[0]) for x in glob.glob('%s/output_run_8090184*_rb0.dat'%ETROC_path)])
-    all_indices = np.sort(all_indices)
-    print(all_indices)
-    # diff = all_indices - file_index
-    # prev_index = all_indices[(all_indices<file_index)][-1]
-    next_index = all_indices[(all_indices>file_index)][0]
-    # print(prev_index, file_index)
-    print(file_index, next_index)
+file_index = int(args.input_file_index)
+ETROC_path = "../../ETROC_output_box_setup/"
+# all_indices = np.array([int(x.split('output_run_')[1].split('_rb0.dat')[0]) for x in glob.glob('%s/output_run_90181*_rb0.dat'%ETROC_path)])
+all_indices = np.array([int(x.split('output_run_')[1].split('_rb0.dat')[0]) for x in glob.glob('%s/output_run_8090184*_rb0.dat'%ETROC_path)])
+all_indices = np.sort(all_indices)
+next_index = all_indices[(all_indices>file_index)][0]
+print(file_index, next_index)
 
-    # ListRawFiles = [(x.split('C8--Cosmics_')[1].split('.trc')[0]) for x in glob.glob('%s/C8--Cosmics_*'%raw_path)]
-    # SetRawFiles = set([int(x) for x in ListRawFiles])
+SetRawFiles = range(file_index, next_index)
+print(SetRawFiles)
 
-    # SetRawFiles = range(prev_index+1, file_index+1)
-    SetRawFiles = range(file_index, next_index)
-    print(SetRawFiles)
+if len(SetRawFiles) != 0:
+    print(f"Number of files to be converted: {len(SetRawFiles)}")
 
-    if len(SetRawFiles) != 0:
-        print(f"Number of files to be converted: {len(SetRawFiles)}")
+for run in SetRawFiles:
+    RecoPath = '%s/converted_run%i.root' % (converted_path,run)
+    RawPath = 'C8--Cosmics_%i.trc' % run
 
-    for run in SetRawFiles:
-        RecoPath = '%s/converted_run%i.root' % (converted_path,run)
-        RawPath = 'C8--Cosmics_%i.trc' % run
+    print('lsof -f --../../ETROC_LecroyScope/%s |grep -Eoi %s' % (RawPath, RawPath))
+    if os.path.exists(RecoPath):
+        print('Run %i already converted. Doing reco stage two' % run)
 
-        print('lsof -f --../../ETROC_LecroyScope/%s |grep -Eoi %s' % (RawPath, RawPath))
-        if os.path.exists(RecoPath):
-            print('Run %i already converted. Doing reco stage two' % run)
+    elif not os.popen('lsof -f -- ../../ETROC_LecroyScope/%s |grep -Eoi %s' % (RawPath, RawPath)).read().strip() == RawPath:
+        print('Converting run ', run)
+        if not useSingleEvent: 
+            print("using conversion")
+            ConversionCmd = "python3 ../../Lecroy/Conversion/conversion.py --runNumber %i" % (run)
+        else:
+            print("using one event conversion")
+            ConversionCmd = "python3 ../../Lecroy/Conversion/conversion_one_event.py --runNumber %i" % (run)
+        os.system(ConversionCmd)
+    
+    if useSingleEvent: continue
+    print('Doing dattoroot for run %i' % run)
+    
+    OutputFile = '%s/run_scope%i.root' % (reco_path, run)
+    DattorootCmd = '../../TimingDAQ/NetScopeStandaloneDat2Root --correctForTimeOffsets --input_file=%s/converted_run%i.root --output_file=%s --config=../../TimingDAQ/config/LecroyScope_v12.config --save_meas'  % (converted_path,run,OutputFile)
+    os.system(DattorootCmd)
+    can_be_later_merged = False
+    
+    try:
+        CoincRate, EntriesWithLGADHits, TotalEntries = RunEntriesScope(OutputFile, LGADChannels, Threshold) # lgad channel starting from zero 
+        can_be_later_merged = True
+    except Exception as error:
+        print(repr(error))
+    print("Run %i: Total entries are %i"%(run,TotalEntries))
+    for i,chan in enumerate(LGADChannels):
+        print('\t Channel %i coincidence:  %.1f%% (%i hits)'  % (chan+1, 100.*CoincRate[i], EntriesWithLGADHits[i]))
+        print("\n")
 
-        elif not os.popen('lsof -f -- ../../ETROC_LecroyScope/%s |grep -Eoi %s' % (RawPath, RawPath)).read().strip() == RawPath:
-            print('Converting run ', run)
-            if not useSingleEvent: 
-                print("using conversion")
-                ConversionCmd = "python3 ../../Lecroy/Conversion/conversion.py --runNumber %i" % (run)
-            else:
-                print("using one event conversion")
-                ConversionCmd = "python3 ../../Lecroy/Conversion/conversion_one_event.py --runNumber %i" % (run)
-            os.system(ConversionCmd)
-        
-        if useSingleEvent: continue
-        print('Doing dattoroot for run %i' % run)
-        
-        OutputFile = '%s/run_scope%i.root' % (reco_path, run)
-        DattorootCmd = '../../TimingDAQ/NetScopeStandaloneDat2Root --correctForTimeOffsets --input_file=%s/converted_run%i.root --output_file=%s --config=../../TimingDAQ/config/LecroyScope_v12.config --save_meas'  % (converted_path,run,OutputFile)
+    print(TotalEntries)
 
-        os.system(DattorootCmd)
-        can_be_later_merged = False
-        
-        try:
-            CoincRate, EntriesWithLGADHits, TotalEntries = RunEntriesScope(OutputFile, LGADChannels, Threshold) # lgad channel starting from zero 
-            can_be_later_merged = True
-        except Exception as error:
-            print(repr(error))
-        print("Run %i: Total entries are %i"%(run,TotalEntries))
-        for i,chan in enumerate(LGADChannels):
-            print('\t Channel %i coincidence:  %.1f%% (%i hits)'  % (chan+1, 100.*CoincRate[i], EntriesWithLGADHits[i]))
-            print("\n")
-        print(TotalEntries)
-
-        print('Now moving the converted and raw data to backup')
-    filebase = "/home/aram/cosmic_data_analysis/Lecroy/Conversion/RECONSTRUCTED/run_scope"
-    # files_to_combine = [f"{filebase}{i}.root" for i in range(prev_index+1, file_index+1)]
-    files_to_combine = [f"{filebase}{i}.root" for i in range(file_index, next_index)]
-    combine_command = f"hadd /home/aram/cosmic_data_analysis/Scope_data_combined_reco/run_{file_index}.root {' '.join(files_to_combine)}"
-    print(combine_command)
-    os.system(combine_command)
-    filebase = "/home/aram/cosmic_data_analysis/Lecroy/Conversion/CONVERTED/converted_run"
-    # files_to_combine = [f"{filebase}{i}.root" for i in range(prev_index+1, file_index+1)]
-    files_to_combine = [f"{filebase}{i}.root" for i in range(file_index, next_index)]
-    combine_command = f"hadd /home/aram/cosmic_data_analysis/Scope_data_combined_conv/converted_run{file_index}.root {' '.join(files_to_combine)}"
-    print(combine_command)
-    os.system(combine_command)
-    break
+print('Now moving the converted and raw data to backup')
+filebase = "./RECONSTRUCTED/run_scope"
+files_to_combine = [f"{filebase}{i}.root" for i in range(file_index, next_index)]
+combine_command = f"hadd ../../Scope_data_combined_reco/run_{file_index}.root {' '.join(files_to_combine)}"
+print(combine_command)
+os.system(combine_command)
+filebase = "./CONVERTED/converted_run"
+files_to_combine = [f"{filebase}{i}.root" for i in range(file_index, next_index)]
+combine_command = f"hadd ../../Scope_data_combined_conv/converted_run{file_index}.root {' '.join(files_to_combine)}"
+print(combine_command)
+os.system(combine_command)

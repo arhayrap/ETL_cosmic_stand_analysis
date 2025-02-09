@@ -285,7 +285,7 @@ for ic in range(nchan):
 		inputFiles.append("%s/C%i--Cosmics_%i.trc" % (RawDataLocalCopyPath, ic+1,runNumber))
 		#print 'rsync -z -v %s %s && mv %s %s' % (this_file,RawDataLocalCopyPath,this_file,RawDataPath+"/to_delete/")
 		#os.system('rsync -z -v %s %s && mv %s %s' % (this_file,RawDataLocalCopyPath,this_file,RawDataPath+"/to_delete/"))
-		os.system('rsync -z -v %s %s && mv %s %s' % (this_file,RawDataLocalCopyPath,this_file,RawDataPath+"/to_delete/"))
+		# os.system('rsync -z -v %s %s && mv %s %s' % (this_file,RawDataLocalCopyPath,this_file,RawDataPath+"/to_delete/"))
 
 	else: inputFiles.append("C%i--Cosmics_%i.trc" % (ic+1,runNumber)) ### condor copies files to current directory
 

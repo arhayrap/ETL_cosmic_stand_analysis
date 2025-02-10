@@ -28,5 +28,7 @@ conversion and the analyis for that particular run. The script is ran by the `ru
 script which selects the run numbers based on the filenames in the `ETROC_output_box_setup` folder 
 or by a provided index list using `--file` argument which takes as an input a filename which contains 
 run numbers. To start the processing of the downloaded binary data run the following command:
-`python3 run_all_files.py --file {filename}`
+```
+python3 run_all_files.py --file {filename}
+```
 .

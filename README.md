@@ -17,7 +17,9 @@ and the ETL module under test.
 
 The collected data is being downloaded from the computer using which the data acquisition is 
 performed by running the `update_ETROC_data.sh` script:
-`bash update_ETROC_data.sh`
+```
+bash update_ETROC_data.sh
+```
 .
 The `full_conversion_chain.sh` script is responsible for performing the conversion of the 
 binary files collected from the oscilloscope and KCU data acquisition board, merging and 
@@ -26,5 +28,7 @@ conversion and the analyis for that particular run. The script is ran by the `ru
 script which selects the run numbers based on the filenames in the `ETROC_output_box_setup` folder 
 or by a provided index list using `--file` argument which takes as an input a filename which contains 
 run numbers. To start the processing of the downloaded binary data run the following command:
-`python3 run_all_files.py --file {filename}`
+```
+python3 run_all_files.py --file {filename}
+```
 .

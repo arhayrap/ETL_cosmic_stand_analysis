@@ -88,7 +88,8 @@ for run in SetRawFiles:
     print('Doing dattoroot for run %i' % run)
     
     OutputFile = '%s/run_scope%i.root' % (reco_path, run)
-    DattorootCmd = '../../TimingDAQ/NetScopeStandaloneDat2Root --correctForTimeOffsets --input_file=%s/converted_run%i.root --output_file=%s --config=../../TimingDAQ/config/LecroyScope_v12.config --save_meas'  % (converted_path,run,OutputFile)
+    # DattorootCmd = '../../TimingDAQ/NetScopeStandaloneDat2Root --correctForTimeOffsets --input_file=%s/converted_run%i.root --output_file=%s --config=../../TimingDAQ/config/LecroyScope_v12.config --save_meas'  % (converted_path,run,OutputFile)
+    DattorootCmd = './NetScopeStandaloneDat2Root --correctForTimeOffsets --input_file=%s/converted_run%i.root --output_file=%s --config=./LecroyScope_v12.config --save_meas'  % (converted_path,run,OutputFile)
     os.system(DattorootCmd)
     can_be_later_merged = False
     

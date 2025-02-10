@@ -17,7 +17,9 @@ and the ETL module under test.
 
 The collected data is being downloaded from the computer using which the data acquisition is 
 performed by running the `update_ETROC_data.sh` script:
-`bash update_ETROC_data.sh`
+```
+bash update_ETROC_data.sh
+```
 .
 The `full_conversion_chain.sh` script is responsible for performing the conversion of the 
 binary files collected from the oscilloscope and KCU data acquisition board, merging and 

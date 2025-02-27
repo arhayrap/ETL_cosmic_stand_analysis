@@ -52,9 +52,9 @@ void Analysis(string filename) {
         "(toa_code*3.125/cal_code)/(Clock[0])", \
     };
     
-    string pixel_mask = ""      // !((col==0&&row==13)||(col==12&&row==15)||(col==12&&row==4)||(col==15&&row==6)||(col==11&&row==15)||(col==12&&row==11)||(col==8&&row==0))";
-    string feducial_region = "" // "(row==4&&col==8)";
-    string condition = ""       // "(2*tot_code-floor(tot_code/32))*3.125/cal_code>2";
+    string pixel_mask = "";      // !((col==0&&row==13)||(col==12&&row==15)||(col==12&&row==4)||(col==15&&row==6)||(col==11&&row==15)||(col==12&&row==11)||(col==8&&row==0))";
+    string feducial_region = ""; // "(row==4&&col==8)";
+    string condition = "cal_code>160&&cal_code<190&&nhits>0&&(2*tot_code-floor(tot_code/32))*3.125/cal_code>2";       // "(2*tot_code-floor(tot_code/32))*3.125/cal_code>2";
     condition = condition;      // + "&&" + pixel_mask; // + "&&" + feducial_region;
 
     string labels[] = {
@@ -92,13 +92,13 @@ void Analysis(string filename) {
     int c_rows = ceil(n_vars*1.0 / c_cols);
     int plotsize = 400;
     int plotting_index = 0;
-    int pixel_combine = 4;
+    int pixel_combine = 1;
     TFile * output_file = new TFile(output_file_path.c_str(), "RECREATE");
     TCanvas * c = new TCanvas("Histograms", "Histograms", c_cols*plotsize, c_rows*plotsize);
     cout<<c_cols<<" "<<c_rows<<endl;
     c->Divide(c_cols, c_rows);
     for (int i = 0; i < n_vars; i++) { // 1D histograms
-        string condition = "cal_code>174&&cal_code<188&&nhits>0&&tot_code!=480&&(2*tot_code-floor(tot_code/32))*3.125/cal_code>4&&amp[2]>400&&amp[2]<1200&&(toa_code*3.125/cal_code)<6.0&&Clock[0]>0"; // LP2_20[0]*1e9!=0.0&&LP2_20[1]*1e9!=0.0";
+        string condition = "cal_code>160&&cal_code<190&&nhits>0&&(2*tot_code-floor(tot_code/32))*3.125/cal_code>2";
         plotting_index++;
         c->cd(plotting_index);
         string new_histname = histnames[i];

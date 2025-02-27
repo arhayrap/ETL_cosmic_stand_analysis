@@ -10,8 +10,6 @@ from yaml import Dumper, Loader
 from DataFrame import DataFrame
 from matplotlib.colors import Normalize
 from matplotlib.colors import LogNorm
-import matplotlib.pyplot as plt
-import logging
 
 try:
     from emoji import emojize
@@ -20,6 +18,7 @@ except ModuleNotFoundError:
         return ''
 import os
 import glob
+import pdb
 
 here = os.path.dirname(os.path.abspath(__file__))
 there = "/media/etl/Storage"
@@ -41,9 +40,7 @@ def data_dumper(
 ):
     # NOTE find all files (i.e. layers) for the specified input file
     df = DataFrame('ETROC2')
-    logger = logging.getLogger(__name__)
-    # logger.setLevel(getattr(logging,args.log_level.upper()))
-    # logger.addHandler(logging.StreamHandler())
+
     events_all_rb = []
     all_runs_good = True
     missing_l1counter = []
@@ -94,11 +91,11 @@ def data_dumper(
         elink_report = {}
 
         uuid = []
-        uuid_diff = []
         all_raw = []
 
         t_tmp = None
         index = 0
+
         for t, d in unpacked_data:
             if index % 10000 == 0:
                 print(f"{index}")
@@ -108,10 +105,8 @@ def data_dumper(
             if t not in ['trailer', 'filler']:
                 all_raw.append(d['raw_full'])
 
+
             if t == 'header':
-                print(f"Header index: {index}")
-                print(f"elink report: {elink_report[d['elink']]['nheader']}")
-                print()
                 index += 1
                 elink_report[d['elink']]['nheader'] += 1
                 hit_counter = 0
@@ -128,36 +123,14 @@ def data_dumper(
                     raw[-1].append(d['raw_full'])
                     if skip_event:
                         print("Skipping event (same l1a counter)", d['l1counter'], d['bcid'], bcid_t)
-                        # continue
+                        continue
+                    pass
                 else:
                     uuid.append(d['l1counter'] | d['bcid']<<8)
-                    print(uuid[-1])
-                    if abs(l1a - d['l1counter']) not in [1,255] and l1a>=0:
-                        missed_l1counter_info = [d['l1counter'], d['bcid'], i, d['l1counter'] - l1a] #original by Daniel
-                        missing_l1counter.append(missed_l1counter_info)  # this checks if we miss any event according to the counter
-                        last_missing = True
-                        continue
-                    '''if (((abs(d['bcid']-bcid_t)<150) or (abs(d['bcid']+3564-bcid_t)<50)) and not (d['bcid'] == bcid_t) and not skip_trigger_check):
-                        skip_event = True
-                        logger.debug("Skipping event", d['l1counter'], d['bcid'], bcid_t)
-                        skip_counter += 1
-                        continue
-                    else:
-                        skip_event = False
-                    if uuid_tmp in uuid and abs(i - np.where(np.array(uuid) == uuid_tmp)[0][-1]) < 150:
-                        logger.debug("Skipping duplicate event")
-                        skip_counter += 1
-                        skip_event = True
-                        continue
-                    else:
-                        uuid.append(d['l1counter'] | d['bcid']<<8)
-                    '''
+                    bcid_t = d['bcid']
                     if (abs(l1a - d['l1counter'])>1) and abs(l1a - d['l1counter'])!=255 and verbose:
                         print("SUS")
                         sus = True
-                    uuid_diff.append(abs(i - np.where(np.array(uuid) == uuid_tmp)[0][-1]))
-                    print(i)
-                    bcid_t = d['bcid']
                     l1a = d['l1counter']
                     event.append(i)
                     counter_h.append(1)
@@ -206,6 +179,7 @@ def data_dumper(
                     skip_event = True
                     continue
                     bad_run = True
+                    #break
 
             if t == 'trailer' and t_tmp != 'trailer':
                 trailers.append(d['raw_full'])
@@ -261,7 +235,7 @@ def data_dumper(
                 print("   L1counter, BCID, event number and step size of these events are:")
 
                 for entry in missing_l1counter:
-                    if len(entry) == 4:
+                    if len(entry) ==4:
                         ml1,mbcid,mev,mdelta = entry
                         mbcidt = 0
                     else:
@@ -295,7 +269,7 @@ def data_dumper(
             # hits[hits==0] = 0.1
             # hits[hits>5] = 5
             fig, ax = plt.subplots(1,1,figsize=(7,7))
-            cax = ax.imshow(hits,vmin=0,vmax=20)
+            cax = ax.imshow(hits)
 
             # Add a colorbar to show the mapping of colors to values
             # cbar = plt.colorbar()
@@ -362,10 +336,7 @@ def data_dumper(
                                 break
 
                         pbar.update()
-        # print(uuid_diff)
-        # plt.close()
-        # plt.hist(uuid_diff)
-        # plt.show()
+
         print("Zipping again")
         events = ak.Array({
             'event': event_number,
@@ -448,7 +419,7 @@ if __name__ == '__main__':
     args = argParser.parse_args()
 
     rbs = args.rbs.split(',')
-    print(args.skip_trigger_check)
+
     nevents, events = data_dumper(
         args.input_file,
         #output_file,

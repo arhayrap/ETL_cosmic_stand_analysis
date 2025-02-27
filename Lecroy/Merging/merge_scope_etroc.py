@@ -21,7 +21,7 @@ argument_holder.add_argument("--run_number", action="store", help = "The run num
 argument_holder.add_argument("--min", action="store", help = "The lowest bound of the fit.", type = float)
 argument_holder.add_argument("--max", action="store", help = "The highest bound of the fit.", type = float)
 argument_holder.add_argument("--threshold", action="store", help = "The applied threshold.", type = float)
-argument_holder.add_argument("--nevents", action="store", help = "The number of events in a batch.", default = 5000, type = int)
+argument_holder.add_argument("--nevents", action="store", help = "The number of events in a batch.", default = 10000, type = int)
 argument_holder.add_argument('--input_file_index', action='store', default='', help="The run number of the merging files.")
 argument_holder.add_argument('--n_peaks', action='store', default=2, help="Number of expected clock peaks.")
 argument_holder.add_argument('--niters', action='store', default=-1, help="Number of iterations.")

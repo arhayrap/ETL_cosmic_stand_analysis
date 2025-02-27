@@ -22,8 +22,11 @@ reco_path ="./RECONSTRUCTED/"
 
 parser = argparse.ArgumentParser(description='Run info.')
 
-parser.add_argument('--singleMode',metavar='Single event mode', type=str,default = 0, help='Single event acquisition (default 0, 1 for yes)',required=False)
-parser.add_argument('--input_file_index',metavar='The input file index', type=str,default = 0, help='',required=False)
+parser.add_argument('--singleMode',metavar='Single event mode', type=str, default = 0, help='Single event acquisition (default 0, 1 for yes)', required=False)
+parser.add_argument('--rb', metavar='The index of the readout board', type=str, default = 0, help='', required=False)
+parser.add_argument('--shift', metavar='The shift for the file index', type=str, default = 0, help='', required=False)
+parser.add_argument('--input_file_index',metavar='The input file index', type=str, default = 0, help='')
+
 args = parser.parse_args()
 
 useSingleEvent =False
@@ -54,14 +57,21 @@ Threshold=15
 
 file_index = int(args.input_file_index)
 ETROC_path = "../../ETROC_output_box_setup/"
+pattern = str(args.input_file_index).split("00000")[0]
 # all_indices = np.array([int(x.split('output_run_')[1].split('_rb0.dat')[0]) for x in glob.glob('%s/output_run_90181*_rb0.dat'%ETROC_path)])
-all_indices = np.array([int(x.split('output_run_')[1].split('_rb0.dat')[0]) for x in glob.glob('%s/output_run_809018114*_rb0.dat'%ETROC_path)])
+all_indices = np.array([int(x.split('output_run_')[1].split(f'_rb{args.rb}.dat')[0]) for x in glob.glob(f'{ETROC_path}/output_run_{pattern}*_rb{args.rb}.dat')])
 all_indices = np.sort(all_indices)
 next_index = all_indices[(all_indices>file_index)][0]
+# next_index = all_indices[(all_indices<file_index)][-1]
 print(file_index, next_index)
+
+shift = int(args.shift)
+next_index+=shift
+file_index+=shift
 
 SetRawFiles = range(file_index, next_index)
 print(SetRawFiles)
+print(len(SetRawFiles))
 
 if len(SetRawFiles) != 0:
     print(f"Number of files to be converted: {len(SetRawFiles)}")
@@ -89,7 +99,7 @@ for run in SetRawFiles:
     
     OutputFile = '%s/run_scope%i.root' % (reco_path, run)
     # DattorootCmd = '../../TimingDAQ/NetScopeStandaloneDat2Root --correctForTimeOffsets --input_file=%s/converted_run%i.root --output_file=%s --config=../../TimingDAQ/config/LecroyScope_v12.config --save_meas'  % (converted_path,run,OutputFile)
-    DattorootCmd = './NetScopeStandaloneDat2Root --correctForTimeOffsets --input_file=%s/converted_run%i.root --output_file=%s --config=./LecroyScope_v12.config --save_meas'  % (converted_path,run,OutputFile)
+    DattorootCmd = '../../NetScopeStandaloneDat2Root --correctForTimeOffsets --input_file=%s/converted_run%i.root --output_file=%s --config=../../LecroyScope_v12.config --save_meas'  % (converted_path,run,OutputFile)
     os.system(DattorootCmd)
     can_be_later_merged = False
     
@@ -108,13 +118,15 @@ for run in SetRawFiles:
 print('Now moving the converted and raw data to backup')
 filebase = "./RECONSTRUCTED/run_scope"
 files_to_combine = [f"{filebase}{i}.root" for i in range(file_index, next_index)]
-os.system(f"rm ../../Scope_data_combined_reco/run_{file_index}.root {' '.join(files_to_combine)}")
-combine_command = f"hadd ../../Scope_data_combined_reco/run_{file_index}.root {' '.join(files_to_combine)}"
+# files_to_combine = [f"{filebase}{i}.root" for i in range(next_index, file_index)]
+os.system(f"rm ../../Scope_data_combined_reco/run_{file_index-shift}.root")
+combine_command = f"hadd -k ../../Scope_data_combined_reco/run_{file_index-shift}.root {' '.join(files_to_combine)}"
 print(combine_command)
 os.system(combine_command)
 filebase = "./CONVERTED/converted_run"
 files_to_combine = [f"{filebase}{i}.root" for i in range(file_index, next_index)]
-os.system(f"rm ../../Scope_data_combined_conv/converted_run{file_index}.root {' '.join(files_to_combine)}")
-combine_command = f"hadd ../../Scope_data_combined_conv/converted_run{file_index}.root {' '.join(files_to_combine)}"
+# files_to_combine = [f"{filebase}{i}.root" for i in range(next_index, file_index)]
+os.system(f"rm ../../Scope_data_combined_conv/converted_run{file_index-shift}.root")
+combine_command = f"hadd -k ../../Scope_data_combined_conv/converted_run{file_index-shift}.root {' '.join(files_to_combine)}"
 print(combine_command)
 os.system(combine_command)

@@ -61,7 +61,11 @@ pattern = str(args.input_file_index).split("00000")[0]
 # all_indices = np.array([int(x.split('output_run_')[1].split('_rb0.dat')[0]) for x in glob.glob('%s/output_run_90181*_rb0.dat'%ETROC_path)])
 all_indices = np.array([int(x.split('output_run_')[1].split(f'_rb{args.rb}.dat')[0]) for x in glob.glob(f'{ETROC_path}/output_run_{pattern}*_rb{args.rb}.dat')])
 all_indices = np.sort(all_indices)
-next_index = all_indices[(all_indices>file_index)][0]
+mask = (all_indices>file_index)
+if (sum(mask) != 0):
+    next_index = all_indices[mask][0]
+else:
+    next_index = int(args.input_file_index)+1
 # next_index = all_indices[(all_indices<file_index)][-1]
 print(file_index, next_index)
 
@@ -84,14 +88,14 @@ for run in SetRawFiles:
     if os.path.exists(RecoPath):
         print('Run %i already converted. Doing reco stage two' % run)
 
-    elif not os.popen('lsof -f -- ../../ETROC_LecroyScope/%s |grep -Eoi %s' % (RawPath, RawPath)).read().strip() == RawPath:
+    elif not os.popen('lsof -f -- %s/../../ETROC_LecroyScope/%s |grep -Eoi %s' % (os.getcwd(), RawPath, RawPath)).read().strip() == RawPath:
         print('Converting run ', run)
         if not useSingleEvent: 
             print("using conversion")
-            ConversionCmd = "python3 ../../Lecroy/Conversion/conversion.py --runNumber %i" % (run)
+            ConversionCmd = "python3 %s/../../Lecroy/Conversion/conversion.py --runNumber %i" % (os.getcwd(), run)
         else:
             print("using one event conversion")
-            ConversionCmd = "python3 ../../Lecroy/Conversion/conversion_one_event.py --runNumber %i" % (run)
+            ConversionCmd = "python3 %s/../../Lecroy/Conversion/conversion_one_event.py --runNumber %i" % (os.getcwd(), run)
         os.system(ConversionCmd)
     
     if useSingleEvent: continue

@@ -109,9 +109,6 @@ def data_dumper(
                 all_raw.append(d['raw_full'])
 
             if t == 'header':
-                print(f"Header index: {index}")
-                print(f"elink report: {elink_report[d['elink']]['nheader']}")
-                print()
                 index += 1
                 elink_report[d['elink']]['nheader'] += 1
                 hit_counter = 0
@@ -131,13 +128,13 @@ def data_dumper(
                         # continue
                 else:
                     uuid.append(d['l1counter'] | d['bcid']<<8)
-                    print(uuid[-1])
+                    '''
                     if abs(l1a - d['l1counter']) not in [1,255] and l1a>=0:
                         missed_l1counter_info = [d['l1counter'], d['bcid'], i, d['l1counter'] - l1a] #original by Daniel
                         missing_l1counter.append(missed_l1counter_info)  # this checks if we miss any event according to the counter
                         last_missing = True
                         continue
-                    '''if (((abs(d['bcid']-bcid_t)<150) or (abs(d['bcid']+3564-bcid_t)<50)) and not (d['bcid'] == bcid_t) and not skip_trigger_check):
+                    if (((abs(d['bcid']-bcid_t)<150) or (abs(d['bcid']+3564-bcid_t)<50)) and not (d['bcid'] == bcid_t) and not skip_trigger_check):
                         skip_event = True
                         logger.debug("Skipping event", d['l1counter'], d['bcid'], bcid_t)
                         skip_counter += 1
@@ -151,12 +148,11 @@ def data_dumper(
                         continue
                     else:
                         uuid.append(d['l1counter'] | d['bcid']<<8)
-                    '''
                     if (abs(l1a - d['l1counter'])>1) and abs(l1a - d['l1counter'])!=255 and verbose:
                         print("SUS")
                         sus = True
+                    '''
                     uuid_diff.append(abs(i - np.where(np.array(uuid) == uuid_tmp)[0][-1]))
-                    print(i)
                     bcid_t = d['bcid']
                     l1a = d['l1counter']
                     event.append(i)

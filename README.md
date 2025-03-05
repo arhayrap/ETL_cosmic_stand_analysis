@@ -18,7 +18,7 @@ and the ETL module under test.
 The main script which is used to perform the data conversion and merging is `run_all_files.py` script.
 The script accepts the following arguments to perform different operations:
 file - A file which contains the run numbers.
-
+```
 --index - An individual run number.  
 --shift - A shift applied to the oscilloscope id.  
 --power_mode - The power mode at which the setup has been running.  
@@ -34,7 +34,7 @@ file - A file which contains the run numbers.
 --clock_fit_thr - The threshold of the clock signal fit.  
 --pattern - The prefix of the run number (the first 4 numbers of the run number).  
 --daq - The address of the DAQ computer (daq@timingdaq03).  
-
+```
 .
 
 The output data, for each corresponding operation is stored in the following folders:

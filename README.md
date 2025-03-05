@@ -10,25 +10,50 @@ to select cosmic muons which are passing through the setup with a strait traject
 a PCB board which has a wirebonded 2x2 LGAD sensor, the information from which is used 
 as a reference in terms of timing performance. 
 
-a multichannel photomultiplier, the information of which is used for triggering of the 
+a multichannel photomultiplier (MCP), the information of which is used for triggering of the 
 setup
 
 and the ETL module under test.
 
-The collected data is being downloaded from the computer using which the data acquisition is 
-performed by running the `update_ETROC_data.sh` script:
-```
-bash update_ETROC_data.sh
-```
+The main script which is used to perform the data conversion and merging is `run_all_files.py` script.
+The script accepts the following arguments to perform different operations:
+file - A file which contains the run numbers.
+
+--index - An individual run number.
+--shift - A shift applied to the oscilloscope id.
+--power_mode - The power mode at which the setup has been running.
+--offset - The offset above baseline that has been applied.
+--l1a_delay - The delay of signal arrival in DAC units.
+--download - Download the ETROC and oscilloscope data from the DAQ computer if they are not downloaded yet.
+--convert - Convert the downloaded information (mention which ones with the parameters below).
+--etroc - Convert the downloaded etroc data.
+--scope - Convert the downloaded scope data.
+--merge - Merge the converted data from the etroc and scope.
+--clock_fit_min - The minima of the clock fitting range.
+--clock_fit_max - The maxima of the clock fitting range.
+--clock_fit_thr - The threshold of the clock signal fit.
+--pattern - The prefix of the run number (the first 4 numbers of the run number).
+--daq - The address of the DAQ computer (daq@timingdaq03).
+
 .
-The `full_conversion_chain.sh` script is responsible for performing the conversion of the 
-binary files collected from the oscilloscope and KCU data acquisition board, merging and 
-analyzing of the converted data. It takes the run number as an input and performs the 
-conversion and the analyis for that particular run. The script is ran by the `run_all_files.py` 
-script which selects the run numbers based on the filenames in the `ETROC_output_box_setup` folder 
-or by a provided index list using `--file` argument which takes as an input a filename which contains 
-run numbers. To start the processing of the downloaded binary data run the following command:
+
+The output data, for each corresponding operation is stored in the following folders:
 ```
-python3 run_all_files.py --file {filename}
+--etroc: ./ETROC_output_box_setup/
+--scope: This step saves two types of output files: the waveforms (./Lecroy/Conversion/CONVERTED/) and the resonstructed timestamps of the waveforms (./Lecroy/Conversion/RECONSTRUCTED/) for different channels of the oscilloscope.
 ```
-.
+The output information from the oscilloscope during each run has been taken with 30 iterations, each iteration contains 100 events. Therefore after processing each 30 consecutive batches of scope data the converted outputs are combined into the following repositories:
+```
+Waveforms: ./Scope_data_combined_conv/
+Timestamps: ./Scope_data_combined_reco/
+```
+
+The `--merge` option will merge the combined scope and etroc data and will perform the calculation of the timestamps for the clock signal waveform provided by the KCU. The output of this procedure is saved in the following folder: "MergedData".
+
+To perform a quick analysis of the merged data the Analysis.C macro can be used which reads the provided root file and makes histograms of the time of arrival (TOA), time over threshold (TOT), the calibration value etc. Also it performs the calculation of the \DeltaT between the ETROC and the MCP for all as well as for each individual pixel. The created histograms are saved in `./ETL_cosmic_stand_analysis/Analysis/output_files` folder as root files.
+
+An example of the execution of the command:
+```
+python3 run_all_files.py --power_mode default --offset 3 --etroc --scope --merge --file ../filelist.txt --download
+```
+

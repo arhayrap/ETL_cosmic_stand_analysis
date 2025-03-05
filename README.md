@@ -19,21 +19,21 @@ The main script which is used to perform the data conversion and merging is `run
 The script accepts the following arguments to perform different operations:
 file - A file which contains the run numbers.
 
---index - An individual run number. \n
---shift - A shift applied to the oscilloscope id. \n
---power_mode - The power mode at which the setup has been running. \n
---offset - The offset above baseline that has been applied. \n 
---l1a_delay - The delay of signal arrival in DAC units. \n 
---download - Download the ETROC and oscilloscope data from the DAQ computer if they are not downloaded yet. \n
---convert - Convert the downloaded information (mention which ones with the parameters below). \n
---etroc - Convert the downloaded etroc data. \n
---scope - Convert the downloaded scope data. \n
---merge - Merge the converted data from the etroc and scope. \n
---clock_fit_min - The minima of the clock fitting range. \n
---clock_fit_max - The maxima of the clock fitting range. \n
---clock_fit_thr - The threshold of the clock signal fit. \n
---pattern - The prefix of the run number (the first 4 numbers of the run number). \n
---daq - The address of the DAQ computer (daq@timingdaq03). \n
+--index - An individual run number.  
+--shift - A shift applied to the oscilloscope id.  
+--power_mode - The power mode at which the setup has been running.  
+--offset - The offset above baseline that has been applied.  
+--l1a_delay - The delay of signal arrival in DAC units.  
+--download - Download the ETROC and oscilloscope data from the DAQ computer if they are not downloaded yet.  
+--convert - Convert the downloaded information (mention which ones with the parameters below).  
+--etroc - Convert the downloaded etroc data.  
+--scope - Convert the downloaded scope data.  
+--merge - Merge the converted data from the etroc and scope.  
+--clock_fit_min - The minima of the clock fitting range.  
+--clock_fit_max - The maxima of the clock fitting range.  
+--clock_fit_thr - The threshold of the clock signal fit.  
+--pattern - The prefix of the run number (the first 4 numbers of the run number).  
+--daq - The address of the DAQ computer (daq@timingdaq03).  
 
 .
 

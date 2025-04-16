@@ -2,12 +2,12 @@ import os
 import sys
 import argparse
 
-base = "./ETROC_output_box_setup" # os.getcwd()
+base = "/home/aram/Efficiency_study/etroc_binaries/" # os.getcwd()
 
 def convert(input_data):
     output_data = input_data.split(".")[0] + ".json"
     print(f"{base}/{input_data}")
-    os.system(f"python3 data_dumper.py --input_file {base}/{input_data}") #  --output_file {base}/{output_data}")
+    # os.system(f"python3 data_dumper.py --input_file {base}/{input_data}") #  --output_file {base}/{output_data}")
     input_data = input_data.split(".")[0] + ".json"
     output_data = output_data.split(".")[0] + ".root"
     os.system(f"python3 root_dumper.py --input_file {base}/{input_data} --output_file {base}/{output_data}")

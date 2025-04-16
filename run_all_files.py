@@ -9,7 +9,7 @@ import argparse
 argParser = argparse.ArgumentParser(description = "Argument parser")
 argParser.add_argument('--file', action='store', default="none", help="A file which contains the run numbers.")
 argParser.add_argument('--index', action='store', default="none", help="The run number.")
-argParser.add_argument('--shift', action='store', default="0", help="A shift applied to the oscilloscope id.")
+argParser.add_argument('--shift', action='store', default=0, help="A shift applied to the oscilloscope id.")
 argParser.add_argument('--power_mode', action='store', default="default", choices = ["default", "low", "medium", "high"], help="The power mode at which the setup has been running.")
 argParser.add_argument('--offset', action='store', default=0, help="The offset above baseline that has been applied.")
 argParser.add_argument('--l1a_delay', action='store', default=18, help="The delay of signal arrival in DAC units.")
@@ -23,6 +23,7 @@ argParser.add_argument('--clock_fit_max', action='store', default=0.9, help="The
 argParser.add_argument('--clock_fit_thr', action='store', default=0.5, help="The threshold of the clock signal fit.")
 argParser.add_argument('--pattern', action='store', default="8090", help="The prefix of the run number.")
 argParser.add_argument('--daq', action='store', default="daq@timingdaq03", help="The address of the DAQ computer.")
+argParser.add_argument('--rb', action='store', default=0, help="The index of the readout board.")
 
 args = argParser.parse_args()
 
@@ -63,6 +64,31 @@ if __name__ == "__main__":
     etroc_pattern = f"output_run_{pattern_number}*.dat"
     current_dir = os.getcwd()
     index_list = []
+
+
+    if args.download:
+        if (args.file == "none" and args.index == "none"):
+            pattern_number = f"{args.pattern}{args.l1a_delay}{args.offset}{power_mode_id[args.power_mode]}00000"
+            command = f"scp -r {args.daq}:{daq_etroc_data_location}*{pattern_number}* {etroc_data_base}"
+            print(command)
+            os.system(command)
+            for i in range(1,9):
+                command = f"scp -r {args.daq}:{daq_scope_data_location}C{i}--Cosmics_{pattern_number}*.trc {scope_data_base}"
+                print(command)
+                os.system(command)
+        else:
+            for index in range(len(index_list)):
+                index = int(index)
+                print(f"Downloading the data for run: {index_list[index]}.")
+                command = f"scp -r {args.daq}:{daq_etroc_data_location}*{{"+f"{int(index_list[index])}"+f"}}* {etroc_data_base}"
+                print(command)
+                os.system(command)
+                for i in range(1,9):
+                    pattern_number = f"{args.pattern}{args.l1a_delay}{args.offset}{power_mode_id[args.power_mode]}00000"
+                    command = f"scp -r {args.daq}:{daq_scope_data_location}C{i}--Cosmics_{{"+f"{int(index_list[index])}..{int(index_list[index])+30}"+f"}}.trc {scope_data_base}"
+                    print(command)
+                    os.system(command)
+
     if (args.file == "none" and args.index == "none"):
         index_list = get_index_list(pattern_number)
     elif (args.file == "none" and args.index != "none"):
@@ -73,29 +99,6 @@ if __name__ == "__main__":
         index_list = open(args.file, "r").read().split("\n")
     print(index_list)
 
-    if args.download:
-        if (args.file == "none" and args.index == "none"):
-            command = f"scp -r {args.daq}:{daq_etroc_data_location}*{pattern_number}* {etroc_data_base}"
-            print(command)
-            os.system(command)
-            for i in range(1,9):
-                pattern_number = f"{args.pattern}{args.l1a_delay}{args.offset}{power_mode_id[args.power_mode]}00000"
-                command = f"scp -r {args.daq}:{daq_scope_data_location}C{i}--Cosmics_{pattern_number}*.trc {scope_data_base}"
-                print(command)
-                os.system(command)
-        else:
-            for index in range(len(index_list)):
-                index = int(index)
-                print(f"Downloading the data for run: {index_list[index]}.")
-                command = f"scp -r {args.daq}:{daq_etroc_data_location}*{{"+f"{int(index_list[index])}..{int(index_list[index])+30}"+f"}}* {etroc_data_base}"
-                print(command)
-                os.system(command)
-                for i in range(1,9):
-                    pattern_number = f"{args.pattern}{args.l1a_delay}{args.offset}{power_mode_id[args.power_mode]}00000"
-                    command = f"scp -r {args.daq}:{daq_scope_data_location}C{i}--Cosmics_{{"+f"{int(index_list[index])}..{int(index_list[index])+30}"+f"}}.trc {scope_data_base}"
-                    print(command)
-                    os.system(command)
-
     iter = 0
     for file_index in index_list:
         current_file = f"{merged_data_base}run_{file_index}.root"
@@ -105,7 +108,7 @@ if __name__ == "__main__":
                 os.system(f"python3 convert_data.py --input_file_index {file_index}")
             if (args.scope):
                 os.chdir("./Lecroy/Conversion/")
-                os.system(f"python3 recoLoop_1.py --input_file_index {file_index} --rb 0 --shift 0")
+                os.system(f"python3 recoLoop_1.py --input_file_index {file_index} --rb {args.rb} --shift {args.shift}")
                 os.chdir("../../")
             if (args.merge):
                 os.chdir("./Lecroy/Merging/")

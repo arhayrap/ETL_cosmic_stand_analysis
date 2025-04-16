@@ -99,6 +99,7 @@ def data_dumper(
 
         t_tmp = None
         index = 0
+        print("unpacked_data :", unpacked_data)
         for t, d in unpacked_data:
             if index % 10000 == 0:
                 print(f"{index}")
@@ -200,8 +201,8 @@ def data_dumper(
                 if nhits[-1] > 256:
                     print("This event already has more than 256 hits. Skipping event.")
                     skip_event = True
+                    # bad_run = True
                     continue
-                    bad_run = True
 
             if t == 'trailer' and t_tmp != 'trailer':
                 trailers.append(d['raw_full'])
@@ -218,7 +219,7 @@ def data_dumper(
                         print("Data stream started with a trailer, that is weird.")
             t_tmp = t
 
-
+        print(bad_run)
         if not bad_run or force:
             print("Zipping")
             events = ak.Array({
@@ -318,7 +319,7 @@ def data_dumper(
         row = []
         col = []
         chipid = []
-
+        print("events_all_rb: ", events_all_rb)
         sel = ak.flatten(ak.ones_like(events_all_rb[0].nhits, dtype=bool))
         events_with_hits = len(events_all_rb[0][sel])
 

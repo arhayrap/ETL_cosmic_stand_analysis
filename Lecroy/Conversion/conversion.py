@@ -29,10 +29,10 @@ if os.path.exists("_condor_stdout"):
 	LocalMode=False
 
 if LocalMode:
-	RawDataPath = "../../ETROC_LecroyScope/" # "/home/daq/LecroyMount/"
+	RawDataPath = "/home/aram/Efficiency_study/scope_binaries/" # "/home/daq/LecroyMount/"
 	# RawDataLocalCopyPath = "/home/daq/SensorBeam2023/LecroyScope/RawData/"
 	# RawDataLocalCopyPath = "/home/daq/ETROC2_Test_Stand/ScopeHandler/ScopeData/LecroyTimingDAQ"
-	RawDataLocalCopyPath = "../../ETROC_LecroyScope/" # "/home/daq/ETROC2_Test_Stand/ScopeHandler/ScopeData/LecroyRaw"
+	RawDataLocalCopyPath = "/home/aram/Efficiency_study/scope_binaries/" # "/home/daq/ETROC2_Test_Stand/ScopeHandler/ScopeData/LecroyRaw"
 
 if not LocalMode:
         OutputFilePath = ""
@@ -278,16 +278,15 @@ print("\nProcessing run %i." % runNumber)
 sourceFiles=[]
 inputFiles=[]
 start = time.time()
-for ic in range(nchan):
-	this_file = "%s/C%i--Cosmics_%i.trc" % (RawDataPath, ic+1,runNumber)
+for ic in [2,3]: # range(nchan):
+	this_file = "%s/C%i--Trace%i.trc" % (RawDataPath, ic+1,runNumber)
 	if LocalMode: 
 		print("Copying files locally and moving originals to deletion folder.")
-		inputFiles.append("%s/C%i--Cosmics_%i.trc" % (RawDataLocalCopyPath, ic+1,runNumber))
+		inputFiles.append("%s/C%i--Trace%i.trc" % (RawDataLocalCopyPath, ic,runNumber))
 		#print 'rsync -z -v %s %s && mv %s %s' % (this_file,RawDataLocalCopyPath,this_file,RawDataPath+"/to_delete/")
 		#os.system('rsync -z -v %s %s && mv %s %s' % (this_file,RawDataLocalCopyPath,this_file,RawDataPath+"/to_delete/"))
 		# os.system('rsync -z -v %s %s && mv %s %s' % (this_file,RawDataLocalCopyPath,this_file,RawDataPath+"/to_delete/"))
-
-	else: inputFiles.append("C%i--Cosmics_%i.trc" % (ic+1,runNumber)) ### condor copies files to current directory
+	else: inputFiles.append("C%i--Trace%i.trc" % (ic,runNumber)) ### condor copies files to current directory
 
 end = time.time()
 print("\nCopying files locally took %i seconds." % (end-start))
@@ -303,8 +302,9 @@ vertical_offsets =[]
 nsegments=0
 points_per_frame=0
 horizontal_interval=0
-for ichan in range(nchan):
-	nsegments,points_per_frame,horizontal_interval,vertical_gain,vertical_offset = get_configuration(inputFiles[ichan])
+for i, ichan in enumerate([2,3]): # range(nchan):
+	print(inputFiles[i])
+	nsegments,points_per_frame,horizontal_interval,vertical_gain,vertical_offset = get_configuration(inputFiles[i])
 	vertical_gains.append(vertical_gain)
 	vertical_offsets.append(vertical_offset)
 
@@ -312,10 +312,10 @@ print("Number of segments: %i" %nsegments)
 print("Points per segment %i" % points_per_frame)
 print("Horizontal interval %s" % str(horizontal_interval))
 
-for ichan in range(nchan):
+for i, ichan in enumerate([2,3]): # range(nchan):
 	print("Channel %i"%ichan)
-	print("\t vertical_gain %0.3f" % vertical_gains[ichan])
-	print("\t vertical offset %0.3f" % vertical_offsets[ichan])
+	print("\t vertical_gain %0.3f" % vertical_gains[i])
+	print("\t vertical offset %0.3f" % vertical_offsets[i])
 
 ### find beginning of trigger time block and y-axis block
 offset,full_offset = get_waveform_block_offset(inputFiles[0])
@@ -324,12 +324,12 @@ offset,full_offset = get_waveform_block_offset(inputFiles[0])
 ## get event times and offsets
 trigger_times,horizontal_offsets = get_segment_times(inputFiles[0],offset,nsegments)
 trigger_times2,horizontal_offsets2 = get_segment_times(inputFiles[1],offset,nsegments)
-trigger_times3,horizontal_offsets3 = get_segment_times(inputFiles[2],offset,nsegments)
-trigger_times3,horizontal_offsets4 = get_segment_times(inputFiles[3],offset,nsegments)
-trigger_times3,horizontal_offsets5 = get_segment_times(inputFiles[4],offset,nsegments)
-trigger_times3,horizontal_offsets6 = get_segment_times(inputFiles[5],offset,nsegments)
-trigger_times3,horizontal_offsets7 = get_segment_times(inputFiles[6],offset,nsegments)
-trigger_times3,horizontal_offsets8 = get_segment_times(inputFiles[7],offset,nsegments)
+# trigger_times3,horizontal_offsets3 = get_segment_times(inputFiles[2],offset,nsegments)
+# trigger_times3,horizontal_offsets4 = get_segment_times(inputFiles[3],offset,nsegments)
+# trigger_times3,horizontal_offsets5 = get_segment_times(inputFiles[4],offset,nsegments)
+# trigger_times3,horizontal_offsets6 = get_segment_times(inputFiles[5],offset,nsegments)
+# trigger_times3,horizontal_offsets7 = get_segment_times(inputFiles[6],offset,nsegments)
+# trigger_times3,horizontal_offsets8 = get_segment_times(inputFiles[7],offset,nsegments)
 
 # for i in range(20):
 # 	print "delta offsets 1st group %i %0.4f" % (i,1e12*(horizontal_offsets[i]-horizontal_offsets2[i]))
@@ -362,23 +362,23 @@ for i in range(nsegments):
         print("Processing event %i" % i)
     channel[0] = get_vertical_array(inputFiles[0],full_offset,points_per_frame,vertical_gains[0],vertical_offsets[0],i)
     channel[1] = get_vertical_array(inputFiles[1],full_offset,points_per_frame,vertical_gains[1],vertical_offsets[1],i)
-    channel[2] = get_vertical_array(inputFiles[2],full_offset,points_per_frame,vertical_gains[2],vertical_offsets[2],i)
-    channel[3] = get_vertical_array(inputFiles[3],full_offset,points_per_frame,vertical_gains[3],vertical_offsets[3],i)
-    channel[4] = get_vertical_array(inputFiles[4],full_offset,points_per_frame,vertical_gains[4],vertical_offsets[4],i)
-    channel[5] = get_vertical_array(inputFiles[5],full_offset,points_per_frame,vertical_gains[5],vertical_offsets[5],i)
-    channel[6] = get_vertical_array(inputFiles[6],full_offset,points_per_frame,vertical_gains[6],vertical_offsets[6],i)
-    channel[7] = get_vertical_array(inputFiles[7],full_offset,points_per_frame,vertical_gains[7],vertical_offsets[7],i)
+    # channel[2] = get_vertical_array(inputFiles[2],full_offset,points_per_frame,vertical_gains[2],vertical_offsets[2],i)
+    # channel[3] = get_vertical_array(inputFiles[3],full_offset,points_per_frame,vertical_gains[3],vertical_offsets[3],i)
+    # channel[4] = get_vertical_array(inputFiles[4],full_offset,points_per_frame,vertical_gains[4],vertical_offsets[4],i)
+    # channel[5] = get_vertical_array(inputFiles[5],full_offset,points_per_frame,vertical_gains[5],vertical_offsets[5],i)
+    # channel[6] = get_vertical_array(inputFiles[6],full_offset,points_per_frame,vertical_gains[6],vertical_offsets[6],i)
+    # channel[7] = get_vertical_array(inputFiles[7],full_offset,points_per_frame,vertical_gains[7],vertical_offsets[7],i)
     time_array[0]    = calc_horizontal_array(points_per_frame,horizontal_interval,horizontal_offsets[i])
     i_evt[0]   = i
     segment_time[0] = trigger_times[i]
     time_offsets[0] = horizontal_offsets[i] -horizontal_offsets[i]
     time_offsets[1] = horizontal_offsets2[i]-horizontal_offsets[i]
-    time_offsets[2] = horizontal_offsets3[i]-horizontal_offsets[i]
-    time_offsets[3] = horizontal_offsets4[i]-horizontal_offsets[i]
-    time_offsets[4] = horizontal_offsets5[i]-horizontal_offsets[i]
-    time_offsets[5] = horizontal_offsets6[i]-horizontal_offsets[i]
-    time_offsets[6] = horizontal_offsets7[i]-horizontal_offsets[i]
-    time_offsets[7] = horizontal_offsets8[i]-horizontal_offsets[i]
+    # time_offsets[2] = horizontal_offsets3[i]-horizontal_offsets[i]
+    # time_offsets[3] = horizontal_offsets4[i]-horizontal_offsets[i]
+    # time_offsets[4] = horizontal_offsets5[i]-horizontal_offsets[i]
+    # time_offsets[5] = horizontal_offsets6[i]-horizontal_offsets[i]
+    # time_offsets[6] = horizontal_offsets7[i]-horizontal_offsets[i]
+    # time_offsets[7] = horizontal_offsets8[i]-horizontal_offsets[i]
 
     outTree.Fill()
 

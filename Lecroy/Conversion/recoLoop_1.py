@@ -16,7 +16,7 @@ import numpy as np
 
 #### Use setup script in home area (setup.sh)
 
-raw_path = "../../ETROC_LecroyScope/"
+raw_path = "/home/aram/Efficiency_study/scope_binaries/"
 converted_path = "./CONVERTED/"
 reco_path ="./RECONSTRUCTED/"
 
@@ -56,11 +56,14 @@ Threshold=15
 # while True:
 
 file_index = int(args.input_file_index)
-ETROC_path = "../../ETROC_output_box_setup/"
-pattern = str(args.input_file_index).split("00000")[0]
+# ETROC_path = "../../ETROC_output_box_setup/"
+ETROC_path = "/home/aram/Efficiency_study/etroc_binaries/"
+pattern = str(args.input_file_index).split("*")[0]
+print(pattern)
 # all_indices = np.array([int(x.split('output_run_')[1].split('_rb0.dat')[0]) for x in glob.glob('%s/output_run_90181*_rb0.dat'%ETROC_path)])
 all_indices = np.array([int(x.split('output_run_')[1].split(f'_rb{args.rb}.dat')[0]) for x in glob.glob(f'{ETROC_path}/output_run_{pattern}*_rb{args.rb}.dat')])
 all_indices = np.sort(all_indices)
+print(all_indices)
 mask = (all_indices>file_index)
 if (sum(mask) != 0):
     next_index = all_indices[mask][0]
@@ -73,6 +76,7 @@ shift = int(args.shift)
 next_index+=shift
 file_index+=shift
 
+next_index = file_index+1
 SetRawFiles = range(file_index, next_index)
 print(SetRawFiles)
 print(len(SetRawFiles))
@@ -82,13 +86,16 @@ if len(SetRawFiles) != 0:
 
 for run in SetRawFiles:
     RecoPath = '%s/converted_run%i.root' % (converted_path,run)
-    RawPath = 'C8--Cosmics_%i.trc' % run
+    # RawPath = 'C8--Cosmics_%i.trc' % run
+    RawPath = 'C2--Cosmics_%i.trc' % run
 
     print('lsof -f --../../ETROC_LecroyScope/%s |grep -Eoi %s' % (RawPath, RawPath))
     if os.path.exists(RecoPath):
         print('Run %i already converted. Doing reco stage two' % run)
-
-    elif not os.popen('lsof -f -- %s/../../ETROC_LecroyScope/%s |grep -Eoi %s' % (os.getcwd(), RawPath, RawPath)).read().strip() == RawPath:
+    ConversionCmd = "python3 ./conversion.py --runNumber %i" % (run)
+    os.system(ConversionCmd)
+    '''
+    elif not os.popen('lsof -f -- /home/aram/Efficiency_study/scope_binaries/ |grep -Eoi %s' % (RawPath)).read().strip() == RawPath:
         print('Converting run ', run)
         if not useSingleEvent: 
             print("using conversion")
@@ -97,13 +104,13 @@ for run in SetRawFiles:
             print("using one event conversion")
             ConversionCmd = "python3 %s/../../Lecroy/Conversion/conversion_one_event.py --runNumber %i" % (os.getcwd(), run)
         os.system(ConversionCmd)
-    
+    '''
     if useSingleEvent: continue
     print('Doing dattoroot for run %i' % run)
     
     OutputFile = '%s/run_scope%i.root' % (reco_path, run)
     # DattorootCmd = '../../TimingDAQ/NetScopeStandaloneDat2Root --correctForTimeOffsets --input_file=%s/converted_run%i.root --output_file=%s --config=../../TimingDAQ/config/LecroyScope_v12.config --save_meas'  % (converted_path,run,OutputFile)
-    DattorootCmd = '../../NetScopeStandaloneDat2Root --correctForTimeOffsets --input_file=%s/converted_run%i.root --output_file=%s --config=../../LecroyScope_v12.config --save_meas'  % (converted_path,run,OutputFile)
+    DattorootCmd = '../../NetScopeStandaloneDat2Root --correctForTimeOffsets --input_file=%s/converted_run%i.root --output_file=%s --config=../../LecroyScope_v12_test.config --save_meas'  % (converted_path,run,OutputFile)
     os.system(DattorootCmd)
     can_be_later_merged = False
     
@@ -119,7 +126,7 @@ for run in SetRawFiles:
 
     print(TotalEntries)
 
-print('Now moving the converted and raw data to backup')
+# print('Now moving the converted and raw data to backup')
 filebase = "./RECONSTRUCTED/run_scope"
 files_to_combine = [f"{filebase}{i}.root" for i in range(file_index, next_index)]
 # files_to_combine = [f"{filebase}{i}.root" for i in range(next_index, file_index)]

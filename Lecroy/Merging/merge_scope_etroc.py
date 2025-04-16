@@ -131,7 +131,7 @@ def add_clock(tree, frequency=40e6, plotting=False):
     correction_offset = tree['timeoffsets']
     channel = ak.to_numpy(tree['channel'])
     time = tree['time']
-    clock = channel[:, 7, :]
+    clock = channel[:, 0, :]
     times = np.array(time[:, 0]) * 1e9
 
     results = linear_fit_rising_edge(clock, times, frequency, 1)
@@ -151,7 +151,7 @@ def add_clock(tree, frequency=40e6, plotting=False):
 
         for i, slope in enumerate(slopes):
             amp = CLK_THRESHOLD
-            timestamp = ((amp - results["biases"][event_idx][i]) / slope) + correction_offset[:, 7][event_idx] * 1e9
+            timestamp = ((amp - results["biases"][event_idx][i]) / slope) # + correction_offset[:, 0][event_idx] * 1e9
             event_timestamps.append(timestamp)
 
             if plotting:
@@ -227,11 +227,16 @@ if __name__ == "__main__":
     """
     
     base = "../../"
+    # reco_tree   = f"{base}/Scope_data_combined_reco/run_{f_index}.root"
+    # etroc_tree  = f"{base}/ETROC_output_box_setup/output_run_{f_index}_rb0.root"
+    # conv_tree   = f"{base}/Scope_data_combined_conv/converted_run{f_index}.root"
     reco_tree   = f"{base}/Scope_data_combined_reco/run_{f_index}.root"
-    etroc_tree  = f"{base}/ETROC_output_box_setup/output_run_{f_index}_rb0.root"
-    conv_tree   = f"{base}/Scope_data_combined_conv/converted_run{f_index}.root"
+    etroc_tree  = f"/home/aram/Efficiency_study/etroc_binaries/output_run_{f_index}_rb0.root"
+    conv_tree   = f"{base}/Scope_data_combined_conv/converted_run{f_index}.root"    # test_tree   = f"../../../Efficiency_study/DESY_April_2025/check.root"
     merged_file = f"{base}/MergedData/run_{f_index}.root"
+    # merged_file = "test.root"
     
     merge_trees([etroc_tree, reco_tree, conv_tree], ["pulse", "pulse", "pulse"], merged_file)
+    # merge_trees([test_tree], ["pulse"], merged_file)
     print("Merging done!")
     

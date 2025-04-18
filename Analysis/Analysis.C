@@ -93,13 +93,13 @@ void Analysis(string filename) {
         "(LP2_20[6]-LP2_20[2])*1e9", \
     };
     
-    string pixel_mask = "!((row==9&&col==2)||(row==2&&col==4))";      // !((col==0&&row==13)||(col==12&&row==15)||(col==12&&row==4)||(col==15&&row==6)||(col==11&&row==15)||(col==12&&row==11)||(col==8&&row==0))";
+    string pixel_mask = "(col==2&&row==9)"; // "!((row==9&&col==2)||(row==2&&col==4))";      // !((col==0&&row==13)||(col==12&&row==15)||(col==12&&row==4)||(col==15&&row==6)||(col==11&&row==15)||(col==12&&row==11)||(col==8&&row==0))";
     string feducial_region = ""; // "(row==4&&col==8)";
     // string condition = "nhits>0&&cal_code>140&&cal_code<190&&((LP2_20[3]!=0.0)||(LP2_20[4]!=0.0)||(LP2_20[5]!=0.0)||(LP2_20[6]!=0.0))"; // (2*tot_code-floor(tot_code/32))*3.125/cal_code>2";
     // string condition = "amp[2]>400&&amp[2]<1200&&nhits>0&&cal_code>170&&cal_code<190&&(2*tot_code-floor(tot_code/32))*3.125/cal_code>0"; // (LP2_20[2]!=0&&amp[2]>400&&amp[2]<1200)"; // &&((LP2_20[3]!=0.0&&amp[3]>=40&&amp[3]<=120)||(LP2_20[4]!=0.0&&amp[4]>=40&&amp[4]<=120)||(LP2_20[5]!=0.0&&amp[5]>=40&&amp[5]<=120)||(LP2_20[6]!=0.0&&amp[6]>=40&&amp[6]<=120))";
     string condition = "amp[2]>400&&amp[2]<1200&&nhits>0&&cal_code>170&&cal_code<190&&(2*tot_code-floor(tot_code/32))*3.125/cal_code>2&&(2*tot_code-floor(tot_code/32))*3.125/cal_code<10"; // (LP2_20[2]!=0&&amp[2]>400&&amp[2]<1200)"; // &&((LP2_20[3]!=0.0&&amp[3]>=40&&amp[3]<=120)||(LP2_20[4]!=0.0&&amp[4]>=40&&amp[4]<=120)||(LP2_20[5]!=0.0&&amp[5]>=40&&amp[5]<=120)||(LP2_20[6]!=0.0&&amp[6]>=40&&amp[6]<=120))";
     // &&((amp[3]>=40&&amp[3]<=120)||(amp[4]>=40&&amp[4]<=120)||(amp[5]>=40&&amp[5]<=120)||(amp[6]>=40&&amp[6]<=120))&&(amp[2]>=400&&amp[2]<=1200)"; // (2*tot_code-floor(tot_code/32))*3.125/cal_code>2";
-    condition = condition; // + "&&" + feducial_region;
+    condition = condition; // + "&&" + pixel_mask; // + "&&" + feducial_region;
 
     string labels[] = {
         "TOA [ns]", \
@@ -145,7 +145,7 @@ void Analysis(string filename) {
     
     int n_vars = sizeof(print_variables) / sizeof(print_variables[0]);
     int c_cols = 4;
-    int TIMEWALK_FIT_FUNCTION_DEGREES = 5;
+    int TIMEWALK_FIT_FUNCTION_DEGREES = 1;
     int c_rows = ceil(n_vars*1.0 / c_cols);
     int plotsize = 400;
     int plotting_index = 0;
@@ -183,7 +183,12 @@ void Analysis(string filename) {
             prefix = print_variables[i] +">>"+new_histname+"(30,4.7,5.3)";
             tmp_condition += "&&(LP2_20[6]!=0.0&&amp[6]>=40&&amp[6]<=120)";
         }
+        else if (histnames[i] == "TOT_code") {
+            prefix = print_variables[i] +">>"+new_histname+"(100,0,400)";
+            tmp_condition += "&&"+pixel_mask;
+        }
         else {
+            tmp_condition = condition;
             prefix = print_variables[i] +">>"+new_histname;
         }
         pulse->Draw(prefix.c_str(), tmp_condition.c_str(), "");
@@ -200,6 +205,7 @@ void Analysis(string filename) {
         "LP2_20[0]:LP2_20[1]", \
         "amp[0]:amp[1]", \
         "(tot_code*2 - floor(tot_code/32))*3.125/cal_code:(row*16+col)", \
+        "cal_code:(row*16+col)", \
         "row:col", \
         "toa_code*3.125/cal_code:LP2_20[2]", \
         "Clock:(tot_code*2 - floor(tot_code/32))*3.125/cal_code", \
@@ -216,6 +222,7 @@ void Analysis(string filename) {
         "sipm1_vs_sipm2_amp", \
         "sipm1_vs_sipm2_ns", \
         "TOT_vs_pixelid", \
+        "CAL_vs_pixelid", \
         "HITMAP", \
         "TOA_vs_MCP", \
         "TOT_vs_Clock", \
@@ -231,7 +238,8 @@ void Analysis(string filename) {
         "TOA", \
         "sipm1_amp", \
         "sipm1_ns", \
-        "tot", \
+        "pixelid", \
+        "pixelid", \
         "col", \
         "MCP", \
         "TOT", \
@@ -247,7 +255,8 @@ void Analysis(string filename) {
         "Clock", \
         "sipm2_amp", \
         "sipm2_ns", \
-        "pixelid", \
+        "tot", \
+        "col", \
         "row", \
         "TOA", \
         "Clock", \

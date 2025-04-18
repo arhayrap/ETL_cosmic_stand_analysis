@@ -22,9 +22,7 @@ void Plotter(string filename) {
     string base = "./output_files/";
     string full_path = base + filename;
     TFile * file = TFile::Open(full_path.c_str());
-    string variables[] = {
-        "TOA", "TOT", "CAL", "HITMAP", "TOA_vs_Clock", "TOA_vs_TOT", "TOA_vs_MCP", "DeltaT_to_fit", "DeltaT_vs_TOT", "DeltaT_vs_TOT_corr", "DeltaT", "DeltaT_corr"
-    };
+    string variables[] = {"TOA", "TOT", "CAL", "HITMAP", "TOA_vs_Clock", "TOA_vs_TOT", "TOA_vs_MCP", "DeltaT_to_fit", "DeltaT_vs_TOT", "DeltaT_vs_TOT_corr", "DeltaT", "DeltaT_corr", "CAL_vs_pixelid", "TOT_vs_pixelid", "TOT_code", "DeltaT_corr"};
     
     const int nvars = sizeof(variables) / sizeof(variables[0]);
     for (int i = 0; i < nvars; i++) {
@@ -40,18 +38,19 @@ void Plotter(string filename) {
             if (variables[i] == "CAL") {
                 c->SetLogy();
                 hist->Draw();
-            } else if (variables[i] == "DeltaT_to_fit") {
+            } else if (variables[i] == "DeltaT_to_fit" || variables[i] == "DeltaT_corr") {
                 int max_bin = hist->GetMaximumBin();
                 float max_bin_content = hist->GetBinContent(max_bin);
                 float max = hist->GetXaxis()->GetBinCenter(max_bin);
                 float mean = hist->GetMean();
                 float std = hist->GetRMS();
-                hist->Rebin(5);
+                if (variables[i] == "DeltaT_to_fit") hist->Rebin(5);
+                if (variables[i] == "DeltaT_corr") hist->Rebin(2);
                 // TF1 * fit_function = new TF1("langaus", "[0]*Gaussian(x,[1],[2])", max - 2*std, max + 2*std);
                 // TF1 * fit_function = new TF1("langaus", "[0]*TMath::Landau(x,[1],[2])", max - 2*std, max + 2*std);
 
-                TF1 * fit_function = new TF1("langaus", "[0]*(TMath::Gaus(x,[1],[2],true)+TMath::Landau(x,[3],[4]))", max - 2*std, max + 2*std);
-                // TF1 * fit_function = new TF1("langaus", "[0]*TMath::Gaus(x,[1],[2],true)", max - 2*std, max + 2*std);
+                TF1 * fit_function = new TF1("langaus", "[0]*(TMath::Gaus(x,[1],[2],true)-TMath::Landau(x,[3],[4]))", max - 3*std, max + 3*std);
+                // TF1 * fit_function = new TF1("langaus", "[0]*TMath::Gaus(x,[1],[2],true)", max - 1*std, max + 3*std);
                 fit_function->SetParameters(max_bin_content, mean, std, mean, std);
                 hist->GetXaxis()->SetTitle("#Delta T [ns]");
                 hist->Draw();
@@ -64,7 +63,8 @@ void Plotter(string filename) {
                 stats->SetY2NDC(0.9);
                 gStyle->SetOptFit(111);
                 fit_function->Draw("same");
-            } else {
+            }
+            else {
                 hist->Draw();
             }
         }
